@@ -1,0 +1,78 @@
+/* WhatsApp del consultorio */
+.wa-head { align-items: center; }
+.wa-head > div:nth-child(2) { flex: 1 1 260px; min-width: 0; }
+.wa-head__logo { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 18px; color: #fff; background: linear-gradient(135deg, #25d366, #128c7e); box-shadow: 0 14px 28px -16px #25d366; }
+.wa-head__logo .bi-b { fill: #fff; }
+
+.wa-chat { display: grid; grid-template-columns: 300px minmax(0, 1fr); min-height: 560px; border: 1px solid var(--saas-border); border-radius: 24px; background: var(--bg-secondary); overflow: hidden; }
+.wa-threads { display: grid; grid-template-rows: auto 1fr; gap: 10px; padding: 12px; border-right: 1px solid var(--saas-border); min-height: 0; }
+.wa-threads ul { margin: 0; padding: 0; list-style: none; overflow-y: auto; display: grid; align-content: start; gap: 2px; }
+.wa-thread { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; width: 100%; padding: 10px; border: 0; border-radius: 14px; background: none; color: var(--saas-text); text-align: left; cursor: pointer; transition: background-color 150ms ease; }
+.wa-thread:hover { background: var(--saas-accent-glow); }
+.wa-thread.is-active { background: color-mix(in srgb, #25d366 12%, var(--bg-secondary)); }
+.wa-thread .cp-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #25d366, #128c7e); }
+.wa-thread__main { display: grid; min-width: 0; }
+.wa-thread__main strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; }
+.wa-thread__main small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--saas-text-muted); }
+.wa-thread time { font: 500 10.5px var(--font-mono, monospace); color: var(--saas-text-muted); align-self: start; margin-top: 3px; }
+
+.wa-conv { display: grid; grid-template-rows: auto 1fr auto auto; min-height: 0; min-width: 0; }
+.wa-conv__head { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--saas-border); }
+.wa-conv__head > div { flex: 1; display: grid; min-width: 0; }
+.wa-conv__head strong { font-size: 14px; }
+.wa-conv__head small { font: 11px var(--font-mono, monospace); color: var(--saas-text-muted); }
+.wa-conv__head .cp-avatar { border-radius: 50%; background: linear-gradient(135deg, #25d366, #128c7e); }
+.wa-conv__head .saas-btn { gap: 8px; border-radius: 12px; color: #128c7e; }
+.wa-conv__log { display: flex; flex-direction: column; gap: 6px; padding: 18px; overflow-y: auto; max-height: 520px;
+  background: radial-gradient(circle at 20% 20%, #25d3660d, transparent 40%), radial-gradient(circle at 80% 70%, #2fe0c80d, transparent 40%), var(--saas-bg); }
+.wa-day { align-self: center; margin: 10px 0 4px; padding: 4px 12px; border-radius: 99px; font-size: 11px; color: var(--saas-text-muted); background: var(--bg-secondary); border: 1px solid var(--saas-border); }
+.wa-day::first-letter { text-transform: uppercase; }
+.wa-bubble { position: relative; display: flex; align-items: flex-end; gap: 8px; max-width: 78%; animation: denti-msg 320ms cubic-bezier(.23, 1, .32, 1) both; }
+.wa-bubble p { margin: 0; padding: 8px 12px 18px; border-radius: 16px; font-size: 13.5px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.wa-bubble time { position: absolute; right: 10px; bottom: 4px; font: 500 9.5px var(--font-mono, monospace); color: var(--saas-text-muted); }
+.wa-bubble.is-in { align-self: flex-start; }
+.wa-bubble.is-in p { background: var(--bg-secondary); border: 1px solid var(--saas-border); border-bottom-left-radius: 4px; }
+.wa-bubble.is-out { align-self: flex-end; }
+.wa-bubble.is-out p { background: #d9fdd3; color: #0b3b2c; border-bottom-right-radius: 4px; }
+body:not(.light-theme) .wa-bubble.is-out p { background: #144d37; color: #e9fff4; }
+.wa-bubble.is-out time { color: #3f7a63; }
+.wa-composer { display: flex; align-items: flex-end; gap: 8px; margin: 12px 12px 4px; padding: 6px 6px 6px 16px; border: 1px solid var(--saas-border); border-radius: 22px; background: var(--saas-bg); transition: border-color 160ms ease, box-shadow 160ms ease; }
+.wa-composer:focus-within { border-color: #25d366; box-shadow: 0 0 0 4px #25d36622; }
+.wa-composer textarea { flex: 1; min-width: 0; max-height: 120px; padding: 9px 0; border: 0; background: none; color: var(--saas-text); font: 14px/1.4 var(--font-body); resize: none; outline: none; field-sizing: content; }
+.wa-composer button { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: 50%; color: #fff; background: linear-gradient(135deg, #25d366, #128c7e); cursor: pointer; transition: transform 160ms ease, opacity 160ms ease; }
+.wa-composer button .bi-b { stroke: #fff; }
+.wa-composer button:disabled { opacity: .4; cursor: not-allowed; }
+.wa-composer__hint { margin: 0 16px 12px; font-size: 11px; color: var(--saas-text-muted); }
+
+.wa-settings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.wa-card { display: grid; gap: 14px; padding: 20px; border: 1px solid var(--saas-border); border-radius: 22px; background: var(--bg-secondary); }
+.wa-card:first-child { grid-row: span 2; }
+.wa-card header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.wa-card h3 { margin: 4px 0 0; font-size: 17px; font-weight: 550; letter-spacing: -.02em; }
+.wa-card > p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--saas-text-muted); }
+.wa-consent { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border: 1px solid var(--saas-border); border-radius: 14px; color: var(--saas-text-muted); font-size: 12px; line-height: 1.55; }
+.wa-consent input { margin: 2px 0 0; accent-color: var(--saas-accent); flex: 0 0 auto; }
+.wa-preview { display: flex; flex-direction: column; gap: 6px; padding: 16px; border-radius: 18px; background: var(--saas-bg); border: 1px solid var(--saas-border); }
+.wa-preview .wa-bubble p { padding-bottom: 8px; }
+.wa-bubble.is-bot { align-items: flex-end; }
+.wa-switch { position: relative; display: inline-flex; align-items: center; gap: 10px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.wa-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.wa-switch span { position: relative; width: 44px; height: 26px; border-radius: 99px; background: var(--saas-border-hover); transition: background-color 200ms ease; }
+.wa-switch span::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px #0003; transition: transform 260ms cubic-bezier(.34, 1.56, .64, 1); }
+.wa-switch input:checked + span { background: #25d366; }
+.wa-switch input:checked + span::after { transform: translateX(18px); }
+.wa-switch input:focus-visible + span { outline: 2px solid var(--saas-accent); outline-offset: 3px; }
+.wa-days { display: flex; gap: 6px; flex-wrap: wrap; }
+.wa-days button { width: 42px; height: 42px; border: 1px solid var(--saas-border); border-radius: 50%; background: var(--saas-bg); color: var(--saas-text-muted); font: 600 13px var(--font-body); cursor: pointer; transition: background-color 150ms ease, color 150ms ease, transform 200ms cubic-bezier(.34, 1.56, .64, 1); }
+.wa-days button.is-active { color: #fff; border-color: transparent; background: linear-gradient(135deg, #25d366, #128c7e); transform: scale(1.05); }
+.wa-secret { display: flex; gap: 6px; }
+.wa-secret input { flex: 1; font-family: var(--font-mono, monospace) !important; font-size: 12.5px !important; }
+.wa-secret button { flex-shrink: 0; padding: 0 14px; border: 1px solid var(--saas-border); border-radius: 13px; background: var(--saas-bg); color: var(--saas-text); font: 500 12.5px var(--font-body); cursor: pointer; }
+.wa-secret + small { color: var(--saas-text-muted); font-size: 11px; }
+.wa-save { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
+@media (max-width: 900px) {
+  .wa-chat { grid-template-columns: 1fr; }
+  .wa-threads { border-right: 0; border-bottom: 1px solid var(--saas-border); max-height: 260px; }
+  .wa-settings { grid-template-columns: 1fr; }
+  .wa-card:first-child { grid-row: auto; }
+}

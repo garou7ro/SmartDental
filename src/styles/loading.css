@@ -1,0 +1,259 @@
+/* ═══ Sistema de carga de SmartDental ═══
+   Usa los tokens del tema del panel (index.css: --primary, --card-bg, --text-*) y el degradado
+   turquesa → azul del logo. Funciona en tema oscuro y claro. */
+:root {
+  --sd-brand-a: #2fe0c8;
+  --sd-brand-b: #1e7bff;
+  --sd-skel-base: rgba(148, 163, 184, 0.12);
+  --sd-skel-shine: rgba(148, 163, 184, 0.24);
+}
+body.light-theme {
+  --sd-skel-base: rgba(15, 23, 42, 0.06);
+  --sd-skel-shine: rgba(15, 23, 42, 0.11);
+}
+
+/* Loader de marca */
+.sd-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 240px;
+  padding: 32px 16px;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 240ms ease;
+}
+.sd-loader.is-visible { opacity: 1; }
+.sd-loader--full {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  min-height: 0;
+  background:
+    radial-gradient(40% 35% at 50% 45%, rgba(47, 224, 200, 0.1), transparent 70%),
+    radial-gradient(40% 35% at 55% 55%, rgba(30, 123, 255, 0.1), transparent 70%),
+    var(--bg-primary, #040813);
+}
+.sd-loader__mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+}
+.sd-loader__mark img {
+  position: relative;
+  z-index: 1;
+  width: 52px;
+  height: 52px;
+  animation: sd-breathe 1800ms ease-in-out infinite;
+}
+.sd-loader__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0deg, var(--sd-brand-a) 110deg, var(--sd-brand-b) 220deg, transparent 300deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+  animation: sd-spin 1100ms linear infinite;
+}
+.sd-loader__glow {
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(47, 224, 200, 0.35), transparent);
+  filter: blur(6px);
+}
+.sd-loader__label {
+  margin: 0;
+  font-family: var(--font-heading, inherit);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-main, #f8fafc);
+}
+.sd-loader__hint {
+  margin: -6px 0 0;
+  max-width: 34ch;
+  font-size: 0.8125rem;
+  color: var(--text-muted, #94a3b8);
+}
+
+/* Indicador local */
+.sd-spinner {
+  display: inline-block;
+  flex: none;
+  width: var(--s, 16px);
+  height: var(--s, 16px);
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  opacity: 0.85;
+  animation: sd-spin 700ms linear infinite;
+  vertical-align: -0.15em;
+}
+.sd-btn-pending { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+
+/* Barra de actualización (datos ya visibles) */
+.sd-bar {
+  position: relative;
+  height: 2px;
+  margin: 0 0 8px;
+  overflow: hidden;
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+.sd-bar.is-active { opacity: 1; }
+.sd-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 35%;
+  background: linear-gradient(90deg, transparent, var(--sd-brand-a), var(--sd-brand-b), transparent);
+  animation: sd-slide 1100ms ease-in-out infinite;
+}
+
+/* Skeletons */
+.sd-skel {
+  display: block;
+  background: linear-gradient(90deg, var(--sd-skel-base) 0%, var(--sd-skel-shine) 50%, var(--sd-skel-base) 100%);
+  background-size: 200% 100%;
+  animation: sd-shimmer 1400ms ease-in-out infinite;
+}
+.sd-skel-table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--card-bg, transparent);
+}
+.sd-skel-row {
+  display: grid;
+  grid-template-columns: 1.6fr repeat(auto-fit, minmax(0, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  padding: 16px 18px;
+  border-top: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
+}
+.sd-skel-row.is-head { border-top: 0; padding-block: 12px; }
+.sd-skel-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+.sd-skel-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding: 18px 20px;
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
+  border-radius: 16px;
+  background: var(--card-bg, transparent);
+}
+.sd-skel-list { display: flex; flex-direction: column; gap: 6px; }
+.sd-skel-item { display: flex; align-items: center; gap: 12px; padding: 10px 4px; }
+.sd-skel-item__text { display: flex; flex: 1; flex-direction: column; gap: 8px; }
+
+/* Estados vacío y error */
+.sd-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 20px;
+  text-align: center;
+  border: 1px dashed var(--card-border, rgba(255, 255, 255, 0.1));
+  border-radius: 16px;
+  background: var(--card-bg, transparent);
+}
+.sd-state__icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 4px;
+  border-radius: 14px;
+  background: rgba(47, 224, 200, 0.1);
+  color: var(--primary, #2fe0c8);
+}
+.sd-state__title { margin: 0; font-weight: 600; color: var(--text-main, #f8fafc); }
+.sd-state__desc { margin: 0; max-width: 46ch; font-size: 0.875rem; line-height: 1.5; color: var(--text-muted, #94a3b8); }
+.sd-state.is-error { border-style: solid; border-color: rgba(239, 68, 68, 0.25); }
+.sd-state.is-error .sd-state__icon { background: rgba(239, 68, 68, 0.1); color: var(--error, #ef4444); }
+.sd-state__body { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+.sd-state__retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  margin-top: 8px;
+  padding: 0 16px;
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.12));
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-main, #f8fafc);
+  font: 600 0.8125rem/1 var(--font-body, inherit);
+  cursor: pointer;
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+.sd-state__retry:hover { border-color: var(--primary, #2fe0c8); }
+.sd-state__retry:focus-visible { outline: 2px solid var(--primary, #2fe0c8); outline-offset: 2px; }
+.sd-state.is-compact {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  text-align: left;
+}
+.sd-state.is-compact .sd-state__icon { width: 32px; height: 32px; margin: 0; border-radius: 10px; }
+.sd-state.is-compact .sd-state__body { align-items: flex-start; flex: 1; min-width: 180px; }
+.sd-state.is-compact .sd-state__retry { margin: 0; }
+
+@keyframes sd-spin { to { transform: rotate(360deg); } }
+@keyframes sd-breathe { 50% { transform: scale(0.94); opacity: 0.85; } }
+@keyframes sd-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@keyframes sd-slide { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .sd-loader__ring { animation-duration: 2400ms; }
+  .sd-loader__mark img, .sd-skel, .sd-bar span { animation: none; }
+  .sd-spinner { animation-duration: 1400ms; }
+}
+
+/* Pantalla de acceso con error recuperable */
+.sd-gate {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px 16px;
+  background: var(--bg-primary, #040813);
+}
+.sd-gate .sd-state { width: min(100%, 440px); }
+.sd-gate__link {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  background: none;
+  color: var(--text-muted, #94a3b8);
+  font: 500 0.875rem/1 var(--font-body, inherit);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.sd-page-skeleton { display: flex; flex-direction: column; gap: 20px; padding: 4px 0; }
+/* altura de viewport explícita: si un ancestro tiene transform, `fixed` deja de cubrir la ventana */
+.sd-loader--full, .sd-gate { min-height: 100vh; min-height: 100svh; height: 100%; }
+
+.sd-remote-image { position: relative; display: inline-grid; place-items: center; flex-shrink: 0; overflow: hidden; border-radius: 12px; color: var(--saas-text-muted, #666); background: var(--saas-bg, #f5f3ef); }
+.sd-remote-image > img, .sd-remote-image > .sd-skel { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }

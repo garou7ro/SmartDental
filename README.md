@@ -44,8 +44,8 @@ Sistema integral de gestión para clínicas y consultorios odontológicos. Dise�
 ## 🚀 Instalación y Ejecución
 
 ### Prerrequisitos
-- [Node.js](https://nodejs.org/) (versión 18 o superior recomendada)
-- `npm` o `pnpm` / `yarn`
+- [Node.js](https://nodejs.org/) 20 o superior (incluye `npm`)
+- [Git](https://git-scm.com/)
 
 ### Pasos
 
@@ -60,17 +60,15 @@ Sistema integral de gestión para clínicas y consultorios odontológicos. Dise�
    npm install
    ```
 
-3. **Iniciar el servidor de desarrollo:**
+3. **Iniciar la aplicación:**
    ```bash
    npm run dev
    ```
-   Abre [http://localhost:5173](http://localhost:5173) en tu navegador para ver la aplicación en ejecución.
+   Se abre [http://localhost:3000](http://localhost:3000) en el navegador. La aplicación ya viene conectada a su servicio en la nube: no hace falta crear un archivo `.env` ni configurar nada más.
 
-4. **(Opcional) Configuración de variables de entorno:**
-   Si deseas utilizar tu propia instancia de base de datos o canales personalizados:
-   ```bash
-   cp .env.example .env
-   ```
+   > La aplicación debe ejecutarse en el puerto **3000** (o **3001**). Si el 3000 está ocupado por otro programa, ciérralo o usa `npm run dev -- --port 3001`.
+
+4. **Ingresar:** usa las credenciales de acceso entregadas junto con el proyecto.
 
 5. **Compilar para producción:**
    ```bash

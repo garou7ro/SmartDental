@@ -1429,71 +1429,61 @@ html.lenis body {
 /* ═══ Entrada de marca ═══
    Anillo de luz que se dibuja, diente con giro 360° y destello, nombre que se enfoca.
    Salida: diafragma que se abre desde el diente (máscara animada) + onda expansiva. */
-@property --sdl-hole { syntax:'<length>'; inherits:false; initial-value:0px; }
-/* Presentación de marca: escenario oscuro, arcada FDI que se enciende y apertura hacia la landing */
-.sdl-boot { --sdl-boot-x:50%; --sdl-boot-y:42%; --sdl-mark:clamp(64px,8vw,92px); position:fixed; inset:0; z-index:200; display:grid; place-items:center; overflow:hidden; background:radial-gradient(120% 90% at 50% 38%,#10233a 0%,#09121f 48%,#05080f 100%); color:#fff; isolation:isolate; user-select:none; }
-.sdl-boot.is-leaving { pointer-events:none; -webkit-mask-image:radial-gradient(circle at var(--sdl-boot-x) var(--sdl-boot-y),transparent var(--sdl-hole),#000 calc(var(--sdl-hole) + 90px)); mask-image:radial-gradient(circle at var(--sdl-boot-x) var(--sdl-boot-y),transparent var(--sdl-hole),#000 calc(var(--sdl-hole) + 90px)); animation:sd-boot-aperture 1000ms cubic-bezier(.76,0,.24,1) both; }
+/* Spot de marca: cortes secos tipo anuncio de TV y barrido hacia la landing */
+.sdl-boot { position:fixed; inset:0; z-index:200; overflow:hidden; background:#05080f; color:#fff; isolation:isolate; user-select:none; }
+.sdl-boot.is-leaving { pointer-events:none; animation:sd-boot-wipe 760ms cubic-bezier(.76,0,.24,1) both; }
+.sdl-boot.is-leaving::after { content:''; position:absolute; top:0; bottom:0; left:0; width:6px; z-index:20; background:linear-gradient(#2fe0c8,#1e5bff); box-shadow:0 0 30px #2fe0c8; animation:sd-boot-edge 760ms cubic-bezier(.76,0,.24,1) both; }
 
-/* Fondo: resplandor que florece detrás de la arcada y retícula técnica tenue */
-.sdl-boot__glow { position:absolute; left:50%; top:42%; z-index:-2; width:min(1100px,140vw); aspect-ratio:1.5; translate:-50% -50%; background:radial-gradient(closest-side,#2fe0c838,#1e7bff22 45%,transparent 72%); opacity:0; animation:sd-boot-bloom 1800ms var(--sdl-ease-out) 200ms both, sd-boot-breathe 5s ease-in-out 2s infinite alternate; }
-.sdl-boot__grid { position:absolute; inset:0; z-index:-1; background-image:linear-gradient(#ffffff0a 1px,transparent 1px),linear-gradient(90deg,#ffffff0a 1px,transparent 1px); background-size:44px 44px; -webkit-mask-image:radial-gradient(ellipse 60% 55% at 50% 42%,#000 10%,transparent 70%); mask-image:radial-gradient(ellipse 60% 55% at 50% 42%,#000 10%,transparent 70%); opacity:0; animation:sd-boot-fade 1400ms ease 100ms both; }
+/* Cada plano aparece en su instante y queda debajo del siguiente: el corte es seco */
+.sdl-shot { position:absolute; inset:0; display:grid; place-content:center; justify-items:center; padding:24px; background:var(--bg,#05080f); color:var(--fg,#fff); visibility:hidden; animation:sd-boot-on 1ms linear var(--at) forwards; }
+.sdl-boot .sdl-shot__word { margin:0; color:var(--fg,#fff); font:600 1em/0.92 var(--sdl-sans); letter-spacing:-.065em; white-space:nowrap; animation:sd-boot-punch 520ms cubic-bezier(.16,1,.3,1) var(--at) both; }
+.sdl-shot__note { position:absolute; left:clamp(20px,4vw,56px); bottom:clamp(22px,5vh,48px); margin:0; font:11px var(--sdl-mono); letter-spacing:.14em; text-transform:uppercase; opacity:.72; }
+.sdl-shot__note b { font-weight:600; }
+.sdl-shot__dots { display:flex; gap:12px; margin-top:clamp(14px,3vh,28px); animation:sd-boot-punch 520ms cubic-bezier(.16,1,.3,1) calc(var(--at) + 60ms) both; }
+.sdl-shot__dots i { width:clamp(18px,2.4vw,30px); aspect-ratio:1; border-radius:28%; }
+.sdl-shot__dots .is-bad { background:#e5484d; }
+.sdl-shot__dots .is-good { background:#1e5bff; }
 
-.sdl-boot__center { position:relative; display:flex; flex-direction:column; align-items:center; padding:24px; text-align:center; transition:transform 700ms cubic-bezier(.76,0,.24,1), opacity 500ms ease; }
-.sdl-boot.is-leaving .sdl-boot__center { transform:scale(.94) translateY(-10px); opacity:0; }
+/* Cierre: dos líneas que entran desde lados opuestos */
+.sdl-shot--close { --bg:#f5f3ef; --fg:#05080f; }
+.sdl-shot--close .sdl-shot__word { display:grid; justify-items:center; font-size:min(15vw,22vh); animation:none; }
+.sdl-shot--close .sdl-shot__word span { display:block; animation:sd-boot-from-left 460ms cubic-bezier(.16,1,.3,1) var(--at) both; }
+.sdl-shot--close .sdl-shot__word .is-accent { background:linear-gradient(100deg,#0b8f88,#1e5bff); -webkit-background-clip:text; background-clip:text; color:transparent; animation-name:sd-boot-from-right; animation-delay:calc(var(--at) + 70ms); }
 
-/* Arcada: cada pieza se enciende con un destello y queda como contorno; algunas toman color clínico */
-.sdl-boot__stage { position:relative; display:grid; place-items:center; width:min(440px,86vw); aspect-ratio:380/280; }
-.sdl-boot__arch { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
-.sdl-boot.is-leaving .sdl-boot__arch { animation:sd-boot-burst 900ms cubic-bezier(.33,1,.68,1) both; }
-.sdl-boot__orbit { fill:none; stroke:#2fe0c8; stroke-width:.8; stroke-dasharray:1; stroke-dashoffset:1; opacity:.55; animation:sd-boot-draw 1600ms cubic-bezier(.65,0,.35,1) 150ms both; }
-.sdl-boot__tooth { fill:#ffffff08; stroke:#ffffff47; stroke-width:1.2; opacity:0; transform-box:fill-box; transform-origin:center; animation:sd-boot-tooth 700ms cubic-bezier(.34,1.4,.5,1) var(--d) both, sd-boot-flash 900ms ease-out var(--d) both; }
-.sdl-boot__tooth.is-bad { animation:sd-boot-tooth 700ms cubic-bezier(.34,1.4,.5,1) var(--d) both, sd-boot-flash 900ms ease-out var(--d) both, sd-boot-bad 600ms ease 1500ms forwards; }
-.sdl-boot__tooth.is-good { animation:sd-boot-tooth 700ms cubic-bezier(.34,1.4,.5,1) var(--d) both, sd-boot-flash 900ms ease-out var(--d) both, sd-boot-good 600ms ease 1650ms forwards; }
+/* Logo final: cae girando con un destello detrás */
+.sdl-shot--logo { --bg:radial-gradient(70% 60% at 50% 45%,#0f2a3d 0%,#05080f 70%); background:var(--bg); }
+.sdl-shot--logo::before { content:''; position:absolute; left:50%; top:44%; width:min(70vmin,620px); aspect-ratio:1; translate:-50% -50%; border-radius:50%; background:radial-gradient(closest-side,#2fe0c855,#1e5bff22 55%,transparent 72%); animation:sd-boot-bloom 900ms cubic-bezier(.16,1,.3,1) var(--at) both; }
+.sdl-boot__mark { position:relative; width:clamp(72px,9vw,112px); aspect-ratio:1; perspective:700px; }
+.sdl-boot__mark img { width:100%; height:100%; display:block; filter:drop-shadow(0 0 24px #2fe0c877) drop-shadow(0 14px 24px #000a); animation:sd-boot-slam 900ms cubic-bezier(.34,1.35,.5,1) var(--at) both; }
+.sdl-boot__word { position:relative; display:flex; margin:clamp(14px,2.4vh,26px) 0 0; font:500 clamp(48px,8.5vw,112px)/1 var(--sdl-sans); letter-spacing:-.065em; }
+.sdl-boot__word span { display:inline-block; animation:sd-boot-rise 700ms cubic-bezier(.16,1,.3,1) calc(var(--at) + 160ms) both; }
+.sdl-boot__word .is-accent { background:linear-gradient(110deg,#2fe0c8,#5aa2ff 75%); -webkit-background-clip:text; background-clip:text; color:transparent; animation-delay:calc(var(--at) + 230ms); }
+.sdl-boot__tag { position:relative; margin:14px 0 0; font:11px var(--sdl-mono); letter-spacing:.2em; text-transform:uppercase; color:#ffffff99; animation:sd-boot-rise 700ms cubic-bezier(.16,1,.3,1) calc(var(--at) + 420ms) both; }
 
-/* Diente de la marca: giro 360° en Y con rebote */
-.sdl-boot__mark { position:relative; width:var(--sdl-mark); aspect-ratio:1; perspective:700px; }
-.sdl-boot__spin { width:100%; height:100%; transform-style:preserve-3d; animation:sd-boot-spin 1500ms cubic-bezier(.34,1.3,.5,1) 350ms both; }
-.sdl-boot__spin img { width:100%; height:100%; display:block; filter:drop-shadow(0 0 22px #2fe0c866) drop-shadow(0 12px 24px #000a); }
+/* Marco de emisión y control para saltar */
+.sdl-boot__chrome { position:absolute; top:clamp(18px,3.5vh,32px); left:clamp(20px,4vw,56px); z-index:5; mix-blend-mode:difference; color:#fff; font:10px var(--sdl-mono); letter-spacing:.16em; text-transform:uppercase; }
+.sdl-boot__chrome span { display:flex; align-items:center; gap:8px; }
+.sdl-boot__chrome i { width:7px; height:7px; border-radius:50%; background:#ff3b3b; animation:sd-boot-rec 900ms steps(2,jump-none) infinite; }
+.sdl-boot__skip { position:absolute; right:clamp(20px,4vw,56px); bottom:clamp(18px,4.5vh,44px); z-index:6; display:flex; gap:14px; align-items:center; min-height:42px; padding:9px 18px; border:1px solid #ffffff40; border-radius:99px; color:#fff; background:#05080f8c; backdrop-filter:blur(8px); cursor:pointer; font:13px var(--sdl-sans); transition:background-color 180ms ease, transform 160ms var(--sdl-ease-out); }
+.sdl-boot__skip:hover { background:#05080fcc; }
+.sdl-boot__skip:active { transform:scale(.96); }
+.sdl-boot__skip:focus-visible { outline:2px solid #2fe0c8; outline-offset:4px; }
+.sdl-boot__progress { position:absolute; left:0; right:0; bottom:0; z-index:6; height:3px; background:linear-gradient(90deg,#2fe0c8,#1e5bff); transform-origin:left; animation:sd-boot-progress var(--hold) linear both; }
+.sdl-boot.is-leaving .sdl-boot__skip, .sdl-boot.is-leaving .sdl-boot__progress, .sdl-boot.is-leaving .sdl-boot__chrome { opacity:0; transition:opacity 150ms ease; }
 
-/* Nombre y lema */
-.sdl-boot__word { display:flex; margin:clamp(10px,2vh,22px) 0 0; padding:.1em; font-size:clamp(44px,8vw,104px); font-weight:400; letter-spacing:-.065em; line-height:1.02; }
-.sdl-boot__word span { display:inline-block; animation:sd-boot-letter 900ms var(--sdl-ease-out) calc(900ms + var(--i)*40ms) both; }
-.sdl-boot__word .is-accent { background:linear-gradient(120deg,#2fe0c8,#5aa2ff 70%); -webkit-background-clip:text; background-clip:text; color:transparent; }
-.sdl-boot__tag { margin:14px 0 0; font:400 clamp(14px,1.8vw,19px) var(--sdl-sans); letter-spacing:-.01em; color:#ffffffa8; animation:sd-boot-rise 900ms var(--sdl-ease-out) 1450ms both; }
-.sdl-boot__tag b { font-weight:500; color:#fff; }
-
-/* Pie: leyenda clínica y botón para entrar sin esperar */
-.sdl-boot__foot { position:absolute; left:clamp(24px,5vw,72px); right:clamp(24px,5vw,72px); bottom:max(28px,env(safe-area-inset-bottom)); display:flex; justify-content:space-between; align-items:center; gap:20px; animation:sd-boot-rise 800ms var(--sdl-ease-out) 1100ms both; transition:opacity 300ms ease; }
-.sdl-boot.is-leaving .sdl-boot__foot { opacity:0; }
-.sdl-boot__foot>span { display:flex; align-items:center; gap:8px; font:10px var(--sdl-mono); letter-spacing:.14em; text-transform:uppercase; color:#ffffff80; }
-.sdl-boot__foot i { width:9px; height:9px; margin-left:6px; border-radius:3px; }
-.sdl-boot__foot i:first-child { margin-left:0; }
-.sdl-boot__foot i.is-bad { background:#ff6b6b; box-shadow:0 0 10px #ff6b6b99; }
-.sdl-boot__foot i.is-good { background:#4d8dff; box-shadow:0 0 10px #4d8dff99; }
-.sdl-boot__foot em { margin-left:18px; padding-left:18px; border-left:1px solid #ffffff26; font-style:normal; }
-.sdl-boot__foot button { display:flex; gap:20px; align-items:center; min-height:44px; padding:10px 20px; border:1px solid #ffffff2e; border-radius:99px; color:#fff; background:#ffffff12; backdrop-filter:blur(8px); cursor:pointer; font:13px var(--sdl-sans); transition:background-color 200ms ease, border-color 200ms ease, transform 160ms var(--sdl-ease-out); }
-.sdl-boot__foot button:hover { background:#ffffff24; border-color:#2fe0c880; }
-.sdl-boot__foot button:active { transform:scale(.96); }
-.sdl-boot__foot button:focus-visible { outline:2px solid #2fe0c8; outline-offset:4px; }
-.sdl-boot__progress { position:absolute; left:0; right:0; bottom:0; height:2px; background:linear-gradient(90deg,#2fe0c8,#1e7bff,#b9a6ff); transform-origin:left; animation:sd-boot-progress 2600ms linear both; }
-.sdl-boot.is-leaving .sdl-boot__progress { opacity:0; transition:opacity 200ms ease; }
-
-@keyframes sd-boot-fade { from { opacity:0; } to { opacity:1; } }
-@keyframes sd-boot-bloom { from { opacity:0; transform:scale(.6); } to { opacity:1; transform:none; } }
-@keyframes sd-boot-breathe { from { transform:scale(1); } to { transform:scale(1.08); } }
-@keyframes sd-boot-draw { to { stroke-dashoffset:0; } }
-@keyframes sd-boot-tooth { from { opacity:0; transform:scale(.2) translateY(6px); } to { opacity:1; transform:none; } }
-@keyframes sd-boot-flash { 0% { stroke:#2fe0c8; fill:#2fe0c866; filter:drop-shadow(0 0 6px #2fe0c8); } 100% { stroke:#ffffff47; fill:#ffffff08; filter:none; } }
-@keyframes sd-boot-bad { to { stroke:#ff6b6b; fill:#ff6b6b55; } }
-@keyframes sd-boot-good { to { stroke:#4d8dff; fill:#4d8dff66; } }
-@keyframes sd-boot-spin { 0% { opacity:0; transform:translateY(20px) scale(.5) rotateY(-360deg); } 35% { opacity:1; } 100% { opacity:1; transform:none; } }
-@keyframes sd-boot-letter { from { opacity:0; filter:blur(12px); transform:translateY(40%) scale(1.12); } to { opacity:1; filter:blur(0); transform:none; } }
-@keyframes sd-boot-rise { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+@keyframes sd-boot-on { to { visibility:visible; } }
+@keyframes sd-boot-punch { from { transform:scale(1.22); } to { transform:none; } }
+@keyframes sd-boot-from-left { from { transform:translateX(-22vw); opacity:0; } to { transform:none; opacity:1; } }
+@keyframes sd-boot-from-right { from { transform:translateX(22vw); opacity:0; } to { transform:none; opacity:1; } }
+@keyframes sd-boot-bloom { from { opacity:0; transform:scale(.4); } to { opacity:1; transform:none; } }
+@keyframes sd-boot-slam { 0% { opacity:0; transform:scale(2.4) rotateY(-360deg); } 40% { opacity:1; } 100% { opacity:1; transform:none; } }
+@keyframes sd-boot-rise { from { opacity:0; transform:translateY(40%); } to { opacity:1; transform:none; } }
+@keyframes sd-boot-rec { 0% { opacity:1; } 100% { opacity:.15; } }
 @keyframes sd-boot-progress { from { transform:scaleX(0); } to { transform:scaleX(1); } }
-@keyframes sd-boot-aperture { from { --sdl-hole:0px; } to { --sdl-hole:150vmax; } }
-@keyframes sd-boot-burst { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(2.6); } }
-@media(max-width:559px) { .sdl-boot__foot>span { flex-wrap:wrap; max-width:190px; line-height:1.7; font-size:9px; } .sdl-boot__foot em { margin-left:0; padding-left:0; border-left:0; } }
-@media(prefers-reduced-motion:reduce) { .sdl-boot *, .sdl-boot.is-leaving { animation:none!important; transition:none!important; transform:none!important; } .sdl-boot__orbit { stroke-dashoffset:0; } .sdl-boot__tooth { opacity:1; } }
+@keyframes sd-boot-wipe { from { clip-path:inset(0 0 0 0); } to { clip-path:inset(0 0 0 100%); } }
+@keyframes sd-boot-edge { from { transform:translateX(0); } to { transform:translateX(100vw); } }
+@media(max-width:559px) { .sdl-shot__note { right:20px; bottom:84px; font-size:9.5px; line-height:1.6; } }
+@media(prefers-reduced-motion:reduce) { .sdl-boot *, .sdl-boot.is-leaving { animation:none!important; transition:none!important; } .sdl-shot { visibility:hidden; } .sdl-shot--logo { visibility:visible; } }
 
 /* ═══ Odontograma 3D ═══ */
 .sdl-odo3d {

@@ -1430,63 +1430,70 @@ html.lenis body {
    Anillo de luz que se dibuja, diente con giro 360° y destello, nombre que se enfoca.
    Salida: diafragma que se abre desde el diente (máscara animada) + onda expansiva. */
 @property --sdl-hole { syntax:'<length>'; inherits:false; initial-value:0px; }
-.sdl-boot { --sdl-boot-x:50%; --sdl-boot-y:42%; --sdl-mark:clamp(76px,10vw,112px); --sdl-halo:calc(var(--sdl-mark) * 1.85); position:fixed; inset:0; z-index:200; display:grid; place-items:center; overflow:hidden; background:#f5f3ef; color:#111214; isolation:isolate; user-select:none; }
+/* Presentación de marca: escenario oscuro, arcada FDI que se enciende y apertura hacia la landing */
+.sdl-boot { --sdl-boot-x:50%; --sdl-boot-y:42%; --sdl-mark:clamp(64px,8vw,92px); position:fixed; inset:0; z-index:200; display:grid; place-items:center; overflow:hidden; background:radial-gradient(120% 90% at 50% 38%,#10233a 0%,#09121f 48%,#05080f 100%); color:#fff; isolation:isolate; user-select:none; }
 .sdl-boot.is-leaving { pointer-events:none; -webkit-mask-image:radial-gradient(circle at var(--sdl-boot-x) var(--sdl-boot-y),transparent var(--sdl-hole),#000 calc(var(--sdl-hole) + 90px)); mask-image:radial-gradient(circle at var(--sdl-boot-x) var(--sdl-boot-y),transparent var(--sdl-hole),#000 calc(var(--sdl-hole) + 90px)); animation:sd-boot-aperture 1000ms cubic-bezier(.76,0,.24,1) both; }
-.sdl-boot__aurora { position:absolute; inset:-30%; z-index:-2; background:radial-gradient(ellipse at 32% 32%,#b9a6ff80,transparent 48%),radial-gradient(ellipse at 73% 64%,#8fe3ee95,transparent 45%),radial-gradient(ellipse at 60% 28%,#ffc2e280,transparent 48%); animation:sd-arrival-light 2600ms var(--sdl-ease-out) both, sd-boot-drift 9s ease-in-out 2.6s infinite alternate; }
-.sdl-boot__grain { position:absolute; inset:0; z-index:-1; opacity:.35; mix-blend-mode:soft-light; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E"); pointer-events:none; }
-.sdl-boot__center { position:relative; display:flex; flex-direction:column; align-items:center; padding:24px; text-align:center; transition:transform 700ms cubic-bezier(.76,0,.24,1), opacity 500ms ease, filter 600ms ease; }
-.sdl-boot.is-leaving .sdl-boot__center { transform:scale(.92) translateY(-12px); opacity:0; filter:blur(8px); }
 
-/* Halo: anillo que se traza + cometa que lo recorre + pulso */
-.sdl-boot__halo { position:absolute; left:50%; top:calc(24px + var(--sdl-mark) / 2); width:var(--sdl-halo); aspect-ratio:1; translate:-50% -50%; pointer-events:none; }
-.sdl-boot__ring { position:absolute; inset:0; width:100%; height:100%; overflow:visible; rotate:-90deg; }
-.sdl-boot__ring-track { fill:none; stroke:#11121410; stroke-width:1; }
-.sdl-boot__ring-draw { fill:none; stroke:url(#sdl-boot-ring); stroke-width:1.6; stroke-linecap:round; stroke-dasharray:1; stroke-dashoffset:1; filter:drop-shadow(0 0 6px #2fe0c880); animation:sd-boot-draw 1500ms cubic-bezier(.65,0,.35,1) 150ms both; }
-.sdl-boot__comet { position:absolute; inset:0; animation:sd-boot-orbit 1500ms cubic-bezier(.65,0,.35,1) 150ms both; }
-.sdl-boot__comet i { position:absolute; left:50%; top:0; width:10px; height:10px; margin:-5px 0 0 -5px; border-radius:50%; background:#fff; box-shadow:0 0 0 3px #2fe0c855,0 0 18px 6px #2fe0c8aa,0 0 42px 10px #1e7bff55; animation:sd-boot-comet-fade 1700ms ease 150ms both; }
-.sdl-boot__pulse { position:absolute; inset:0; border-radius:50%; border:1px solid #2fe0c8; opacity:0; animation:sd-boot-pulse 1400ms var(--sdl-ease-out) 1550ms both; }
-.sdl-boot.is-leaving .sdl-boot__halo { animation:sd-boot-shock 1000ms cubic-bezier(.33,1,.68,1) both; }
+/* Fondo: resplandor que florece detrás de la arcada y retícula técnica tenue */
+.sdl-boot__glow { position:absolute; left:50%; top:42%; z-index:-2; width:min(1100px,140vw); aspect-ratio:1.5; translate:-50% -50%; background:radial-gradient(closest-side,#2fe0c838,#1e7bff22 45%,transparent 72%); opacity:0; animation:sd-boot-bloom 1800ms var(--sdl-ease-out) 200ms both, sd-boot-breathe 5s ease-in-out 2s infinite alternate; }
+.sdl-boot__grid { position:absolute; inset:0; z-index:-1; background-image:linear-gradient(#ffffff0a 1px,transparent 1px),linear-gradient(90deg,#ffffff0a 1px,transparent 1px); background-size:44px 44px; -webkit-mask-image:radial-gradient(ellipse 60% 55% at 50% 42%,#000 10%,transparent 70%); mask-image:radial-gradient(ellipse 60% 55% at 50% 42%,#000 10%,transparent 70%); opacity:0; animation:sd-boot-fade 1400ms ease 100ms both; }
 
-/* Diente: giro 360° en Y con rebote, destello que lo cruza y sombra que respira */
+.sdl-boot__center { position:relative; display:flex; flex-direction:column; align-items:center; padding:24px; text-align:center; transition:transform 700ms cubic-bezier(.76,0,.24,1), opacity 500ms ease; }
+.sdl-boot.is-leaving .sdl-boot__center { transform:scale(.94) translateY(-10px); opacity:0; }
+
+/* Arcada: cada pieza se enciende con un destello y queda como contorno; algunas toman color clínico */
+.sdl-boot__stage { position:relative; display:grid; place-items:center; width:min(440px,86vw); aspect-ratio:380/280; }
+.sdl-boot__arch { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+.sdl-boot.is-leaving .sdl-boot__arch { animation:sd-boot-burst 900ms cubic-bezier(.33,1,.68,1) both; }
+.sdl-boot__orbit { fill:none; stroke:#2fe0c8; stroke-width:.8; stroke-dasharray:1; stroke-dashoffset:1; opacity:.55; animation:sd-boot-draw 1600ms cubic-bezier(.65,0,.35,1) 150ms both; }
+.sdl-boot__tooth { fill:#ffffff08; stroke:#ffffff47; stroke-width:1.2; opacity:0; transform-box:fill-box; transform-origin:center; animation:sd-boot-tooth 700ms cubic-bezier(.34,1.4,.5,1) var(--d) both, sd-boot-flash 900ms ease-out var(--d) both; }
+.sdl-boot__tooth.is-bad { animation:sd-boot-tooth 700ms cubic-bezier(.34,1.4,.5,1) var(--d) both, sd-boot-flash 900ms ease-out var(--d) both, sd-boot-bad 600ms ease 1500ms forwards; }
+.sdl-boot__tooth.is-good { animation:sd-boot-tooth 700ms cubic-bezier(.34,1.4,.5,1) var(--d) both, sd-boot-flash 900ms ease-out var(--d) both, sd-boot-good 600ms ease 1650ms forwards; }
+
+/* Diente de la marca: giro 360° en Y con rebote */
 .sdl-boot__mark { position:relative; width:var(--sdl-mark); aspect-ratio:1; perspective:700px; }
-.sdl-boot__spin { position:relative; width:100%; height:100%; transform-style:preserve-3d; animation:sd-boot-spin 1500ms cubic-bezier(.34,1.3,.5,1) 250ms both; }
-.sdl-boot__spin img { width:100%; height:100%; display:block; filter:drop-shadow(0 14px 22px #167c9130); }
-.sdl-boot__sheen { position:absolute; inset:0; -webkit-mask:url('/landing/logo-mark-256.webp') center/contain no-repeat; mask:url('/landing/logo-mark-256.webp') center/contain no-repeat; background:linear-gradient(105deg,transparent 35%,#ffffffd9 50%,transparent 65%) no-repeat; background-size:250% 100%; background-position:150% 0; animation:sd-boot-sheen 900ms ease-in-out 1500ms both; }
-.sdl-boot__shadow { position:absolute; left:15%; right:15%; bottom:-14px; height:10px; border-radius:50%; background:radial-gradient(#167c9140,transparent 70%); animation:sd-boot-shadow 1500ms cubic-bezier(.34,1.3,.5,1) 250ms both; }
+.sdl-boot__spin { width:100%; height:100%; transform-style:preserve-3d; animation:sd-boot-spin 1500ms cubic-bezier(.34,1.3,.5,1) 350ms both; }
+.sdl-boot__spin img { width:100%; height:100%; display:block; filter:drop-shadow(0 0 22px #2fe0c866) drop-shadow(0 12px 24px #000a); }
 
-/* Nombre: cada letra pasa de desenfocada a nítida */
-.sdl-boot__word { display:flex; margin:calc(var(--sdl-halo) / 2 - var(--sdl-mark) / 2 + 22px) 0 0; padding:.1em; font-size:clamp(42px,8vw,100px); font-weight:400; letter-spacing:-.065em; line-height:1.05; }
-.sdl-boot__word span { display:inline-block; animation:sd-boot-letter 1000ms var(--sdl-ease-out) calc(650ms + var(--i)*45ms) both; }
-.sdl-boot__word .is-accent { background:linear-gradient(120deg,#0b8f88,#1e7bff); -webkit-background-clip:text; background-clip:text; color:transparent; }
-.sdl-boot__tag { margin:22px 0 0; font:400 clamp(10px,1.4vw,13px) var(--sdl-mono); letter-spacing:.2em; text-transform:uppercase; color:#646671; animation:sd-boot-tag 1100ms var(--sdl-ease-out) 1250ms both; }
+/* Nombre y lema */
+.sdl-boot__word { display:flex; margin:clamp(10px,2vh,22px) 0 0; padding:.1em; font-size:clamp(44px,8vw,104px); font-weight:400; letter-spacing:-.065em; line-height:1.02; }
+.sdl-boot__word span { display:inline-block; animation:sd-boot-letter 900ms var(--sdl-ease-out) calc(900ms + var(--i)*40ms) both; }
+.sdl-boot__word .is-accent { background:linear-gradient(120deg,#2fe0c8,#5aa2ff 70%); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.sdl-boot__tag { margin:14px 0 0; font:400 clamp(14px,1.8vw,19px) var(--sdl-sans); letter-spacing:-.01em; color:#ffffffa8; animation:sd-boot-rise 900ms var(--sdl-ease-out) 1450ms both; }
+.sdl-boot__tag b { font-weight:500; color:#fff; }
 
-.sdl-boot__foot { position:absolute; left:clamp(24px,5vw,72px); right:clamp(24px,5vw,72px); bottom:max(28px,env(safe-area-inset-bottom)); display:flex; justify-content:space-between; align-items:center; gap:20px; animation:sd-arrival-letter 800ms var(--sdl-ease-out) 900ms both; transition:opacity 300ms ease; }
+/* Pie: leyenda clínica y botón para entrar sin esperar */
+.sdl-boot__foot { position:absolute; left:clamp(24px,5vw,72px); right:clamp(24px,5vw,72px); bottom:max(28px,env(safe-area-inset-bottom)); display:flex; justify-content:space-between; align-items:center; gap:20px; animation:sd-boot-rise 800ms var(--sdl-ease-out) 1100ms both; transition:opacity 300ms ease; }
 .sdl-boot.is-leaving .sdl-boot__foot { opacity:0; }
-.sdl-boot__foot>span { font:10px var(--sdl-mono); letter-spacing:.15em; color:#646671; }
-.sdl-boot__foot button { display:flex; gap:20px; align-items:center; min-height:44px; padding:10px 20px; border:1px solid #11121420; border-radius:99px; color:#111214; background:#ffffff8f; backdrop-filter:blur(8px); cursor:pointer; font:13px var(--sdl-sans); transition:background-color 200ms ease, transform 160ms var(--sdl-ease-out); }
-.sdl-boot__foot button:hover { background:#fff; }
+.sdl-boot__foot>span { display:flex; align-items:center; gap:8px; font:10px var(--sdl-mono); letter-spacing:.14em; text-transform:uppercase; color:#ffffff80; }
+.sdl-boot__foot i { width:9px; height:9px; margin-left:6px; border-radius:3px; }
+.sdl-boot__foot i:first-child { margin-left:0; }
+.sdl-boot__foot i.is-bad { background:#ff6b6b; box-shadow:0 0 10px #ff6b6b99; }
+.sdl-boot__foot i.is-good { background:#4d8dff; box-shadow:0 0 10px #4d8dff99; }
+.sdl-boot__foot em { margin-left:18px; padding-left:18px; border-left:1px solid #ffffff26; font-style:normal; }
+.sdl-boot__foot button { display:flex; gap:20px; align-items:center; min-height:44px; padding:10px 20px; border:1px solid #ffffff2e; border-radius:99px; color:#fff; background:#ffffff12; backdrop-filter:blur(8px); cursor:pointer; font:13px var(--sdl-sans); transition:background-color 200ms ease, border-color 200ms ease, transform 160ms var(--sdl-ease-out); }
+.sdl-boot__foot button:hover { background:#ffffff24; border-color:#2fe0c880; }
 .sdl-boot__foot button:active { transform:scale(.96); }
-.sdl-boot__foot button:focus-visible { outline:2px solid #087f83; outline-offset:4px; }
-.sdl-boot__progress { position:absolute; left:0; right:0; bottom:0; height:2px; background:linear-gradient(90deg,#2fe0c8,#1e7bff,#b9a6ff); transform-origin:left; animation:sd-boot-progress 2300ms linear both; }
+.sdl-boot__foot button:focus-visible { outline:2px solid #2fe0c8; outline-offset:4px; }
+.sdl-boot__progress { position:absolute; left:0; right:0; bottom:0; height:2px; background:linear-gradient(90deg,#2fe0c8,#1e7bff,#b9a6ff); transform-origin:left; animation:sd-boot-progress 2600ms linear both; }
 .sdl-boot.is-leaving .sdl-boot__progress { opacity:0; transition:opacity 200ms ease; }
 
-@keyframes sd-arrival-light { from { opacity:0; transform:scale(.94) rotate(-8deg); } to { opacity:1; transform:scale(1.03) rotate(3deg); } }
-@keyframes sd-arrival-letter { from { opacity:0; transform:translateY(100%); } to { opacity:1; transform:none; } }
-@keyframes sd-boot-drift { from { transform:scale(1.03) rotate(3deg); } to { transform:scale(1.08) rotate(-2deg) translate(2%,1%); } }
+@keyframes sd-boot-fade { from { opacity:0; } to { opacity:1; } }
+@keyframes sd-boot-bloom { from { opacity:0; transform:scale(.6); } to { opacity:1; transform:none; } }
+@keyframes sd-boot-breathe { from { transform:scale(1); } to { transform:scale(1.08); } }
 @keyframes sd-boot-draw { to { stroke-dashoffset:0; } }
-@keyframes sd-boot-orbit { from { transform:rotate(0); } to { transform:rotate(360deg); } }
-@keyframes sd-boot-comet-fade { 0% { opacity:0; transform:scale(.4); } 12% { opacity:1; transform:scale(1); } 80% { opacity:1; } 100% { opacity:0; transform:scale(.3); } }
-@keyframes sd-boot-pulse { from { opacity:.7; transform:scale(1); } to { opacity:0; transform:scale(1.35); } }
-@keyframes sd-boot-spin { 0% { opacity:0; transform:translateY(26px) scale(.55) rotateY(-360deg); } 35% { opacity:1; } 100% { opacity:1; transform:none; } }
-@keyframes sd-boot-shadow { from { opacity:0; transform:scaleX(.3); } to { opacity:1; transform:none; } }
-@keyframes sd-boot-sheen { from { background-position:150% 0; } to { background-position:-60% 0; } }
-@keyframes sd-boot-letter { from { opacity:0; filter:blur(14px); transform:translateY(40%) scale(1.15); } to { opacity:1; filter:blur(0); transform:none; } }
-@keyframes sd-boot-tag { from { opacity:0; letter-spacing:.7em; filter:blur(6px); } to { opacity:1; letter-spacing:.2em; filter:blur(0); } }
+@keyframes sd-boot-tooth { from { opacity:0; transform:scale(.2) translateY(6px); } to { opacity:1; transform:none; } }
+@keyframes sd-boot-flash { 0% { stroke:#2fe0c8; fill:#2fe0c866; filter:drop-shadow(0 0 6px #2fe0c8); } 100% { stroke:#ffffff47; fill:#ffffff08; filter:none; } }
+@keyframes sd-boot-bad { to { stroke:#ff6b6b; fill:#ff6b6b55; } }
+@keyframes sd-boot-good { to { stroke:#4d8dff; fill:#4d8dff66; } }
+@keyframes sd-boot-spin { 0% { opacity:0; transform:translateY(20px) scale(.5) rotateY(-360deg); } 35% { opacity:1; } 100% { opacity:1; transform:none; } }
+@keyframes sd-boot-letter { from { opacity:0; filter:blur(12px); transform:translateY(40%) scale(1.12); } to { opacity:1; filter:blur(0); transform:none; } }
+@keyframes sd-boot-rise { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
 @keyframes sd-boot-progress { from { transform:scaleX(0); } to { transform:scaleX(1); } }
 @keyframes sd-boot-aperture { from { --sdl-hole:0px; } to { --sdl-hole:150vmax; } }
-@keyframes sd-boot-shock { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(7); } }
-@media(max-width:559px) { .sdl-boot__foot>span { max-width:160px; line-height:1.7; font-size:9px; } }
-@media(prefers-reduced-motion:reduce) { .sdl-boot *, .sdl-boot.is-leaving { animation:none!important; transition:none!important; transform:none!important; } .sdl-boot__ring-draw { stroke-dashoffset:0; } }
+@keyframes sd-boot-burst { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(2.6); } }
+@media(max-width:559px) { .sdl-boot__foot>span { flex-wrap:wrap; max-width:190px; line-height:1.7; font-size:9px; } .sdl-boot__foot em { margin-left:0; padding-left:0; border-left:0; } }
+@media(prefers-reduced-motion:reduce) { .sdl-boot *, .sdl-boot.is-leaving { animation:none!important; transition:none!important; transform:none!important; } .sdl-boot__orbit { stroke-dashoffset:0; } .sdl-boot__tooth { opacity:1; } }
 
 /* ═══ Odontograma 3D ═══ */
 .sdl-odo3d {

@@ -36,18 +36,45 @@ const timeOf = (d) => d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '
 const toLocalInput = (d) => `${keyOf(d)}T${timeOf(d)}`;
 const initials = (name = '') => name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || 'P';
 
-/** Reparte citas superpuestas de un día en carriles. */
-function layoutDay(items) {
+/**
+ * Reparte las citas de un día en carriles. Los carriles se calculan por grupo de citas que se
+ * superponen (no por día), así una cita sin choques usa todo el ancho. Si un grupo necesita más
+ * carriles de los que caben (`maxLanes`), se muestran los primeros y el resto se agrupa en un
+ * indicador «+N» con la posición del grupo.
+ */
+function layoutDay(items, maxLanes) {
   const sorted = [...items].sort((a, b) => a.start - b.start);
-  const lanes = [];
+  const shown = [];
+  const overflow = [];
+  let group = [];
+  let groupEnd = 0;
+  const flush = () => {
+    if (!group.length) return;
+    const lanes = [];
+    group.forEach((it) => {
+      let lane = lanes.findIndex((end) => end <= it.start.getTime());
+      if (lane === -1) { lane = lanes.length; lanes.push(0); }
+      lanes[lane] = it.start.getTime() + BLOCK_MIN * 60000;
+      it.lane = lane;
+    });
+    const fits = lanes.length <= maxLanes;
+    const cols = fits ? lanes.length : Math.max(1, maxLanes - 1);
+    const hidden = [];
+    group.forEach((it) => {
+      if (it.lane < cols) shown.push({ ...it, lanes: fits ? cols : maxLanes, badge: !fits && maxLanes === 1 && it === group[0] });
+      else hidden.push(it);
+    });
+    if (hidden.length) overflow.push({ start: group[0].start, items: group, hidden: hidden.length, lane: cols, lanes: maxLanes });
+    group = [];
+  };
   sorted.forEach((it) => {
-    let lane = lanes.findIndex((end) => end <= it.start.getTime());
-    if (lane === -1) { lane = lanes.length; lanes.push(0); }
-    lanes[lane] = it.start.getTime() + BLOCK_MIN * 60000;
-    it.lane = lane;
+    const t = it.start.getTime();
+    if (group.length && t >= groupEnd) flush();
+    group.push(it);
+    groupEnd = Math.max(groupEnd, t + BLOCK_MIN * 60000);
   });
-  sorted.forEach((it) => { it.lanes = Math.max(1, lanes.length); });
-  return sorted;
+  flush();
+  return { shown, overflow };
 }
 
 function MiniMonth({ month, onMonth, selected, onPick, counts }) {
@@ -254,6 +281,8 @@ export default function AgendaCalendar() {
   const [workflowPreview, setWorkflowPreview] = useState(null);
   const [now, setNow] = useState(() => new Date());
   const gridRef = useRef(null);
+  const [colWidth, setColWidth] = useState(0);
+  const [cluster, setCluster] = useState(null);
   const isDentist = profile?.role === 'assistant' && profile?.assistant_role === 'odontologo';
 
   useEffect(() => { const t = setInterval(() => setNow(new Date()), 60000); return () => clearInterval(t); }, []);
@@ -309,6 +338,21 @@ export default function AgendaCalendar() {
       setParams((prev) => { const n = new URLSearchParams(prev); n.delete('paciente'); return n; }, { replace: true });
     }
   }, [params, setParams]);
+
+  // Ancho real de una columna de día: decide cuántas citas superpuestas caben lado a lado.
+  useEffect(() => {
+    const el = gridRef.current;
+    if (!el) return undefined;
+    const measure = () => {
+      const col = el.querySelector('.ag-cal__col');
+      if (col) setColWidth(col.getBoundingClientRect().width);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [view, days.length, citasQuery.isLoading]);
+  const maxLanes = Math.max(1, Math.floor((colWidth || 120) / (view === 'day' ? 150 : 88)));
 
   // Al abrir la vista, desplaza la rejilla a la hora actual.
   useEffect(() => {
@@ -448,7 +492,7 @@ export default function AgendaCalendar() {
                   {hours.map((h) => <span key={h} style={{ top: ((h - START_HOUR) * 60 / SLOT_MIN) * ROW }}>{String(h).padStart(2, '0')}:00</span>)}
                 </div>
                 {days.map((d) => {
-                  const items = layoutDay(visible.filter((c) => sameDay(new Date(c.fecha_hora), d)).map((c) => ({ ...c, start: new Date(c.fecha_hora) })));
+                  const { shown: items, overflow } = layoutDay(visible.filter((c) => sameDay(new Date(c.fecha_hora), d)).map((c) => ({ ...c, start: new Date(c.fecha_hora) })), maxLanes);
                   const isToday = sameDay(d, now);
                   const nowTop = ((now.getHours() * 60 + now.getMinutes() - START_HOUR * 60) / SLOT_MIN) * ROW;
                   return (
@@ -460,7 +504,7 @@ export default function AgendaCalendar() {
                           <button
                             key={c.id}
                             type="button"
-                            className={`ag-event is-${c.estado}`}
+                            className={`ag-event is-${c.estado} ${c.badge ? 'has-badge' : ''}`}
                             style={{ top, height: (BLOCK_MIN / SLOT_MIN) * ROW - 3, left: `calc(${(c.lane / c.lanes) * 100}% + 3px)`, width: `calc(${100 / c.lanes}% - 6px)` }}
                             onClick={() => setSelected(c)}
                             title={`${timeOf(c.start)} · ${c.pacientes?.nombre || ''} · ${c.motivo || ''}`}
@@ -468,6 +512,24 @@ export default function AgendaCalendar() {
                             <time>{timeOf(c.start)}</time>
                             <strong>{c.pacientes?.nombre || 'Paciente'}</strong>
                             <small>{c.motivo || 'Consulta'}</small>
+                          </button>
+                        );
+                      })}
+                      {overflow.map((g) => {
+                        const mins = g.start.getHours() * 60 + g.start.getMinutes() - START_HOUR * 60;
+                        const top = Math.max(0, (mins / SLOT_MIN) * ROW);
+                        // Con un solo carril, el indicador va como insignia sobre la cita visible.
+                        const corner = g.lanes === 1;
+                        return (
+                          <button
+                            key={`more-${g.start.getTime()}`}
+                            type="button"
+                            className={`ag-more ${corner ? 'is-corner' : ''}`}
+                            style={corner ? { top: top + 4, right: 7 } : { top, height: (BLOCK_MIN / SLOT_MIN) * ROW - 3, left: `calc(${(g.lane / g.lanes) * 100}% + 3px)`, width: `calc(${100 / g.lanes}% - 6px)` }}
+                            onClick={() => setCluster({ day: d, items: g.items })}
+                            aria-label={`Ver ${g.items.length} citas desde las ${timeOf(g.start)}`}
+                          >
+                            <b>+{g.hidden}</b><small>{g.hidden === 1 ? 'cita' : 'citas'}</small>
                           </button>
                         );
                       })}
@@ -494,6 +556,34 @@ export default function AgendaCalendar() {
         />
       )}
       {workflowPreview && <Dialog label="Revisar cancelación" onClose={() => setWorkflowPreview(null)}><WorkflowResult data={workflowPreview} kind="cancel" onConfirmed={() => {citasQuery.refetch();monthQuery.refetch();}} /></Dialog>}
+      {cluster && (
+        <Dialog label={`Citas del ${cluster.day.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' })}`} onClose={() => setCluster(null)}>
+          <div className="cp-sheet cp-sheet--narrow ag-cluster">
+            <header className="cp-sheet__head">
+              <span className="cp-avatar is-lg" aria-hidden="true"><BrandIcon name="agenda" size={24} /></span>
+              <div className="cp-sheet__title">
+                <span className="odo-kicker">{cluster.day.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+                <h2>{cluster.items.length} citas desde las {timeOf(cluster.items[0].start)}</h2>
+              </div>
+              <button type="button" className="cp-close" onClick={() => setCluster(null)} aria-label="Cerrar"><BrandIcon name="close" size={18} /></button>
+            </header>
+            <ul>
+              {cluster.items.map((c) => (
+                <li key={c.id}>
+                  <button type="button" className={`ag-cluster__item is-${c.estado}`} onClick={() => { setCluster(null); setSelected(c); }}>
+                    <time>{timeOf(c.start)}</time>
+                    <span><strong>{c.pacientes?.nombre || 'Paciente'}</strong><small>{c.motivo || 'Consulta'}</small></span>
+                    <em>{ESTADO[c.estado]?.label || c.estado}</em>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <footer>
+              <button type="button" className="saas-btn saas-btn-secondary" onClick={() => { setCursor(cluster.day); setView('day'); setCluster(null); }}>Ver el día completo</button>
+            </footer>
+          </div>
+        </Dialog>
+      )}
       {selected && (
         <AppointmentDialog cita={selected} onClose={() => setSelected(null)} onStatus={updateStatus} pending={statusPending} clinicSlug={clinicSlug} clinicName={profile?.clinic_name} />
       )}

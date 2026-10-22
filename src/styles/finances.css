@@ -1,0 +1,45 @@
+/* Caja e ingresos */
+.fin-head-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.fin-head-actions .saas-btn { gap: 8px; min-height: 46px; border-radius: 14px; }
+.fin-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.fin-kpi { display: grid; gap: 6px; padding: 18px; border: 1px solid var(--saas-border); border-radius: 20px; background: var(--bg-secondary); }
+.fin-kpi > span { font-size: 12px; color: var(--saas-text-muted); }
+.fin-kpi b { font-size: clamp(20px, 2.2vw, 28px); font-weight: 450; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.fin-kpi.is-hero { color: #fff; border-color: transparent; background: radial-gradient(120% 140% at 0% 0%, #2fe0c8, #1e7bff 60%, #6b5cf6); box-shadow: 0 20px 40px -26px #1e7bff; }
+.fin-kpi.is-hero > span { color: #ffffffcc; }
+
+.fin-chart { padding: 18px 18px 10px; border: 1px solid var(--saas-border); border-radius: 22px; background: var(--bg-secondary); }
+.fin-chart header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.fin-chart header strong { display: block; margin-top: 4px; font-size: 24px; font-weight: 450; letter-spacing: -.04em; }
+.fin-chart header p { margin: 0; font-size: 12.5px; color: var(--saas-text-muted); }
+.fin-chart header p b { color: var(--saas-text); }
+.fin-chart svg { display: block; width: 100%; height: 190px; overflow: visible; }
+.fin-chart__grid { stroke: var(--saas-border); stroke-dasharray: 3 4; }
+.fin-chart__bar { fill: url(#fin-bar); transform-box: fill-box; transform-origin: bottom; animation: fin-grow 700ms cubic-bezier(.23, 1, .32, 1) both; animation-delay: calc(var(--i) * 14ms); transition: opacity 150ms ease; }
+.fin-chart__bar.is-zero { fill: var(--saas-border); }
+.fin-chart svg:hover .fin-chart__bar:not(.is-hover) { opacity: .45; }
+@keyframes fin-grow { from { transform: scaleY(0); } to { transform: none; } }
+.fin-chart__label { font: 500 10px var(--font-mono, monospace); fill: var(--saas-text-muted); }
+
+.fin-ledger { display: grid; gap: 14px; }
+.fin-ledger__total { margin: 0; font-size: 12.5px; color: var(--saas-text-muted); }
+.fin-ledger__total b { color: var(--saas-text); }
+.fin-day h3 { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 6px; padding: 0 4px; font-size: 12.5px; font-weight: 500; color: var(--saas-text-muted); }
+.fin-day h3 span::first-letter { text-transform: uppercase; }
+.fin-day h3 b { font: 600 12.5px var(--font-mono, monospace); color: var(--saas-text); }
+.fin-day ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.fin-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid var(--saas-border); border-radius: 16px; background: var(--bg-secondary); animation: cp-rise 420ms cubic-bezier(.23, 1, .32, 1) both; }
+.fin-row .cp-avatar { width: 36px; height: 36px; font-size: 11px; }
+.fin-row__main { display: grid; flex: 1; min-width: 0; }
+.fin-row__main strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 600; }
+.fin-row__main small { font-size: 12px; color: var(--saas-text-muted); }
+.fin-row__amount { font: 600 14px var(--font-mono, monospace); color: #059669; white-space: nowrap; }
+body:not(.light-theme) .fin-row__amount { color: #34d399; }
+
+.fin-amount { display: flex; align-items: baseline; gap: 8px; padding: 14px 18px; border: 1px solid var(--saas-border); border-radius: 18px; background: var(--saas-bg); transition: border-color 160ms ease, box-shadow 160ms ease; }
+.fin-amount:focus-within { border-color: var(--saas-accent); box-shadow: 0 0 0 4px var(--saas-accent-glow); }
+.fin-amount span { font-size: 20px; color: var(--saas-text-muted); }
+.fin-amount input { flex: 1; min-width: 0; border: 0; background: none; color: var(--saas-text); font: 450 40px var(--font-body); letter-spacing: -.04em; outline: none; }
+.fin-income .cp-avatar .bi-b { fill: #fff; }
+@media (max-width: 860px) { .fin-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { .fin-chart__bar, .fin-row { animation: none; } }

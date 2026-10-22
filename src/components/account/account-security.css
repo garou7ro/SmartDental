@@ -1,0 +1,92 @@
+/* Contraseña y acceso: compartido por el panel de administración y el portal de la clínica. */
+.sd-account { --acc-radius: 22px; --acc-iris: linear-gradient(110deg, #b9a6ff33, #8fe3ee3b 42%, #ffc2e229 80%); display: grid; gap: 20px; min-width: 0; animation: sd-account-in 520ms cubic-bezier(.23,1,.32,1) both; }
+.sd-account .sd-eyebrow { display: block; margin-bottom: 10px; font: 500 10px var(--font-mono, ui-monospace, monospace); letter-spacing: .15em; text-transform: uppercase; color: var(--saas-text-muted); }
+.sd-account .sd-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* Cabecera con sello animado */
+.sd-account__hero { position: relative; isolation: isolate; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 24px; padding: 30px 32px; border: 1px solid var(--saas-border); border-radius: 28px; background: var(--bg-secondary); overflow: hidden; }
+.sd-account__hero::before { content: ''; position: absolute; inset: 0 0 0 40%; z-index: -1; background: var(--acc-iris); mask-image: linear-gradient(90deg, transparent, #000); }
+.sd-account__hero::after { content: ''; position: absolute; width: 340px; height: 340px; right: -120px; top: -160px; z-index: -1; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--saas-accent) 22%, transparent), transparent 70%); animation: sd-account-drift 9s ease-in-out infinite alternate; }
+.sd-account__seal { position: relative; display: grid; place-items: center; width: 76px; height: 76px; border-radius: 24px; color: var(--saas-accent); background: linear-gradient(135deg, color-mix(in srgb, var(--saas-accent) 16%, var(--bg-secondary)), var(--bg-secondary)); border: 1px solid var(--saas-border); box-shadow: 0 18px 30px -22px color-mix(in srgb, var(--saas-accent) 70%, transparent); }
+.sd-account__seal-ring { position: absolute; inset: -7px; border-radius: 28px; border: 1px solid color-mix(in srgb, var(--saas-accent) 35%, transparent); animation: sd-account-ring 2.8s cubic-bezier(.23,1,.32,1) infinite; }
+.sd-account__hero-copy h2 { margin: 0; font-size: clamp(26px, 2.6vw, 36px); font-weight: 400; letter-spacing: -.045em; line-height: 1.1; color: var(--saas-text); }
+.sd-account__hero-copy p { margin: 10px 0 0; max-width: 52ch; font-size: 14px; line-height: 1.6; color: var(--saas-text-muted); }
+.sd-account__identity { display: grid; gap: 10px; margin: 0; min-width: 0; }
+.sd-account__identity > div { padding: 10px 14px; border-radius: 14px; border: 1px solid var(--saas-border); background: color-mix(in srgb, var(--bg-secondary) 70%, transparent); backdrop-filter: blur(8px); min-width: 0; }
+.sd-account__identity dt { display: flex; align-items: center; gap: 6px; font: 500 9px var(--font-mono, ui-monospace, monospace); letter-spacing: .12em; text-transform: uppercase; color: var(--saas-text-muted); }
+.sd-account__identity dt svg { color: var(--saas-accent); }
+.sd-account__identity dd { margin: 4px 0 0; font-size: 13px; color: var(--saas-text); overflow-wrap: anywhere; }
+
+/* Cuerpo: formulario + guía */
+.sd-account__grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, .9fr); gap: 20px; align-items: start; }
+.sd-account__card { min-width: 0; padding: 28px; border: 1px solid var(--saas-border); border-radius: var(--acc-radius); background: var(--bg-secondary); box-shadow: 0 1px 2px #00000004, 0 16px 34px -30px #0000002b; }
+.sd-account__card-head h3 { margin: 0; font-size: 18px; font-weight: 500; letter-spacing: -.03em; color: var(--saas-text); }
+.sd-account__card-head p { margin: 6px 0 0; font-size: 13px; line-height: 1.6; color: var(--saas-text-muted); }
+.sd-account__form { display: grid; gap: 18px; }
+.sd-account__form fieldset { display: grid; gap: 16px; border: 0; padding: 0; margin: 6px 0 0; min-width: 0; }
+.sd-account__form fieldset:disabled { opacity: .65; }
+.sd-account__divider { height: 1px; margin: 4px 0; background: linear-gradient(90deg, transparent, var(--saas-border), transparent); }
+
+.sd-pass-field { display: grid; gap: 8px; }
+.sd-pass-field__control { position: relative; }
+.sd-pass-field__icon { position: absolute; left: 14px; top: 50%; translate: 0 -50%; color: var(--saas-text-muted); pointer-events: none; transition: color 200ms ease; }
+.sd-pass-field .saas-input { width: 100%; min-width: 0; min-height: 48px; padding-left: 42px; padding-right: 50px; border-radius: 14px; transition: border-color 200ms ease, box-shadow 200ms ease, background-color 200ms ease; }
+.sd-pass-field .saas-input:focus { border-color: var(--saas-accent); box-shadow: 0 0 0 4px var(--saas-accent-glow); }
+.sd-pass-field__control:focus-within .sd-pass-field__icon { color: var(--saas-accent); }
+.sd-pass-field__eye { position: absolute; right: 4px; top: 50%; translate: 0 -50%; display: grid; place-items: center; width: 42px; height: 42px; border: 0; border-radius: 12px; background: none; color: var(--saas-text-muted); cursor: pointer; transition: color 160ms ease, background-color 160ms ease; }
+.sd-pass-field__eye:hover { color: var(--saas-text); background: var(--saas-accent-glow); }
+
+.sd-strength { display: flex; align-items: center; gap: 14px; margin-top: -4px; font-size: 12px; color: var(--saas-text-muted); }
+.sd-strength__bars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; flex: 1; max-width: 220px; }
+.sd-strength__bars i { height: 5px; border-radius: 99px; background: var(--saas-border); overflow: hidden; position: relative; }
+.sd-strength__bars i::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: var(--strength, var(--saas-accent)); transform: scaleX(0); transform-origin: left; transition: transform 420ms cubic-bezier(.23,1,.32,1); }
+.sd-strength__bars i.is-on::after { transform: scaleX(1); }
+.sd-strength__bars i:nth-child(2)::after { transition-delay: 40ms; }
+.sd-strength__bars i:nth-child(3)::after { transition-delay: 80ms; }
+.sd-strength__bars i:nth-child(4)::after { transition-delay: 120ms; }
+.sd-strength.is-level-1 { --strength: var(--saas-error); }
+.sd-strength.is-level-2 { --strength: var(--saas-warning); }
+.sd-strength.is-level-3 { --strength: var(--saas-accent-secondary); }
+.sd-strength.is-level-4 { --strength: linear-gradient(90deg, #2fe0c8, var(--saas-accent)); }
+.sd-strength strong { color: var(--saas-text); font-weight: 600; }
+
+.sd-account__verification { display: grid; gap: 12px; border-top: 1px solid var(--saas-border); padding-top: 18px; }
+.sd-account__verification p, .sd-account__hint { color: var(--saas-text-muted); font-size: 13px; line-height: 1.6; margin: 0; }
+.sd-account__verification .saas-input { min-height: 46px; border-radius: 14px; }
+.sd-account__validation { margin: 0; padding: 10px 14px; border-radius: 12px; border-left: 3px solid var(--saas-error); background: color-mix(in srgb, var(--saas-error) 8%, transparent); color: var(--saas-text); font-size: 13px; line-height: 1.6; animation: sd-account-shake 380ms ease; }
+.sd-account__notice { display: flex; gap: 12px; align-items: center; margin: 0; padding: 14px 16px; border-radius: 14px; font-size: 14px; line-height: 1.5; color: var(--saas-text); background: var(--saas-accent-glow); border: 1px solid color-mix(in srgb, var(--saas-accent) 25%, transparent); animation: sd-account-in 420ms cubic-bezier(.23,1,.32,1) both; }
+.sd-account__notice > svg { color: var(--saas-accent); flex-shrink: 0; }
+.sd-account__check { display: grid; place-items: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; color: #fff; background: linear-gradient(135deg, #2fe0c8, var(--saas-accent)); animation: sd-account-pop 600ms cubic-bezier(.34,1.56,.64,1) both; }
+.sd-account__submit { justify-self: start; min-height: 46px; padding-inline: 22px; border-radius: 14px; white-space: normal; text-align: center; }
+
+.sd-rules-list { display: grid; gap: 4px; margin: 18px 0 0; padding: 0; list-style: none; }
+.sd-rules-list li { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 12px; font-size: 13px; color: var(--saas-text-muted); transition: color 220ms ease, background-color 220ms ease; }
+.sd-rules-list li.is-ok { color: var(--saas-text); background: color-mix(in srgb, var(--saas-accent) 7%, transparent); }
+.sd-rules-list__mark { display: grid; place-items: center; flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--saas-border-hover); color: transparent; transition: background-color 260ms ease, border-color 260ms ease, color 260ms ease, transform 420ms cubic-bezier(.34,1.56,.64,1); }
+.sd-rules-list li.is-ok .sd-rules-list__mark { color: #fff; border-color: transparent; background: linear-gradient(135deg, #2fe0c8, var(--saas-accent)); transform: scale(1.08); }
+.sd-account__tip { display: flex; gap: 12px; margin-top: 18px; padding: 16px; border-radius: 16px; background: var(--acc-iris); color: var(--saas-text); }
+.sd-account__tip svg { flex-shrink: 0; margin-top: 2px; color: var(--saas-accent); }
+.sd-account__tip p { margin: 0; font-size: 12.5px; line-height: 1.6; }
+.sd-account :focus-visible { outline: 2px solid var(--saas-accent); outline-offset: 3px; }
+
+@keyframes sd-account-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes sd-account-ring { 0% { opacity: .9; transform: scale(.92); } 100% { opacity: 0; transform: scale(1.25); } }
+@keyframes sd-account-drift { to { transform: translate(-40px, 30px) scale(1.1); } }
+@keyframes sd-account-pop { from { transform: scale(0) rotate(-45deg); } to { transform: none; } }
+@keyframes sd-account-shake { 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+
+@media (max-width: 1100px) {
+  .sd-account__hero { grid-template-columns: auto minmax(0, 1fr); }
+  .sd-account__identity { grid-column: 1 / -1; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .sd-account__grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .sd-account__hero { grid-template-columns: 1fr; padding: 24px 20px; gap: 18px; }
+  .sd-account__seal { width: 60px; height: 60px; border-radius: 19px; }
+  .sd-account__card { padding: 22px 18px; }
+  .sd-pass-field .saas-input { font-size: 16px; }
+  .sd-account__submit { width: 100%; justify-self: stretch; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sd-account, .sd-account *, .sd-account *::before, .sd-account *::after { animation: none !important; transition: none !important; }
+}

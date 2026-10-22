@@ -1,0 +1,94 @@
+/* Shell visual compartido: panel de la clínica (.clinic-experience) y administración (.sd-admin). */
+.clinic-experience, .sd-admin { --shell-spring: cubic-bezier(.34, 1.3, .64, 1); --shell-ease: cubic-bezier(.23, 1, .32, 1); position: relative; isolation: isolate; }
+
+/* ── Fondo ambiental: auroras lentas + retícula de puntos ── */
+.panel-ambient { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.panel-ambient i { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .5; will-change: transform; animation: shell-drift 26s ease-in-out infinite alternate; }
+.panel-ambient i:nth-child(1) { width: 46vw; height: 40vw; left: 18%; top: -18vw; background: #b9a6ff; }
+.panel-ambient i:nth-child(2) { width: 38vw; height: 34vw; right: -10vw; top: 22vh; background: #8fe3ee; animation-duration: 32s; animation-delay: -8s; }
+.panel-ambient i:nth-child(3) { width: 30vw; height: 28vw; left: 30%; bottom: -16vw; background: #ffc2e2; animation-duration: 38s; animation-delay: -16s; opacity: .35; }
+.panel-ambient::after { content: ''; position: absolute; inset: 0; background-image: radial-gradient(color-mix(in srgb, var(--saas-text) 9%, transparent) 1px, transparent 1.2px); background-size: 22px 22px; mask-image: radial-gradient(ellipse 80% 70% at 60% 30%, #000 30%, transparent 75%); opacity: .55; }
+body:not(.light-theme) .panel-ambient i { opacity: .16; }
+body:not(.light-theme) .panel-ambient i:nth-child(2) { background: #2fe0c8; }
+body:not(.light-theme) .panel-ambient i:nth-child(3) { background: #1e7bff; opacity: .12; }
+@keyframes shell-drift { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(6vw, 4vh) scale(1.12); } 100% { transform: translate(-4vw, 8vh) scale(.95); } }
+
+/* El fondo sólido de la capa principal taparía el ambiente: se vuelve translúcido. */
+body.light-theme .clinic-experience, .clinic-experience, .sd-admin, .sd-admin .saas-main, .clinic-experience .saas-main, .clinic-experience .clinic-workspace { background: transparent !important; }
+.clinic-experience, .sd-admin { background-color: var(--saas-bg) !important; }
+
+/* ── Vidrio en barra lateral y cabecera ── */
+.clinic-experience .saas-sidebar, .sd-admin .saas-sidebar {
+  background: color-mix(in srgb, var(--bg-secondary) 78%, transparent) !important;
+  backdrop-filter: blur(22px) saturate(1.4); -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  border-right: 1px solid color-mix(in srgb, var(--saas-border) 80%, transparent);
+  box-shadow: 1px 0 0 #ffffff0a inset;
+}
+.clinic-experience .clinic-header, .sd-admin .saas-main-header {
+  background: color-mix(in srgb, var(--saas-bg) 62%, transparent) !important;
+  backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4);
+}
+
+/* ── Píldora deslizante del menú ── */
+.clinic-experience .saas-nav, .sd-admin .saas-sidebar-nav { position: relative; }
+.panel-nav-pill { position: absolute; left: 0; top: 0; z-index: 0; border-radius: 13px; pointer-events: none; opacity: 0;
+  background: linear-gradient(110deg, color-mix(in srgb, var(--saas-accent) 16%, var(--bg-secondary)), color-mix(in srgb, #6b5cf6 10%, var(--bg-secondary)));
+  border: 1px solid color-mix(in srgb, var(--saas-accent) 28%, transparent);
+  box-shadow: 0 10px 24px -16px var(--saas-accent), inset 0 1px 0 #ffffff30;
+  transition: transform 520ms var(--shell-spring), height 380ms var(--shell-ease), width 380ms var(--shell-ease), opacity 200ms ease; }
+.panel-nav-pill::before { content: ''; position: absolute; left: -1px; top: 24%; bottom: 24%; width: 3px; border-radius: 0 3px 3px 0; background: linear-gradient(180deg, #2fe0c8, #1e7bff); }
+.clinic-experience .saas-nav-link, .sd-admin .saas-nav-link { position: relative; z-index: 1; }
+.clinic-experience .saas-nav-link.active, .sd-admin .saas-nav-link.active { background: transparent !important; border-color: transparent !important; box-shadow: none !important; }
+.clinic-experience .saas-nav-link.active::after, .sd-admin .saas-nav-link::before { display: none !important; }
+.clinic-experience .saas-nav-link:not(.active):hover, .sd-admin .saas-nav-link:not(.active):hover { background: color-mix(in srgb, var(--saas-text) 4%, transparent) !important; }
+
+/* ── Foco de luz que sigue al cursor ── */
+.is-spot:not(.is-hero):not(.sd-overview-hero):not(.cp-page-head):not(.sd-account__hero) {
+  background-image: radial-gradient(420px circle at var(--mx) var(--my), color-mix(in srgb, var(--saas-accent) 9%, transparent), transparent 55%) !important;
+  border-color: color-mix(in srgb, var(--saas-accent) 30%, var(--saas-border)) !important;
+}
+.sd-overview-hero.is-spot, .cp-page-head.is-spot, .sd-account__hero.is-spot {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--saas-accent) 22%, transparent), 0 24px 60px -40px var(--saas-accent);
+}
+
+/* ── Superficies: profundidad y brillo superior sutil ── */
+.clinic-experience :is(.saas-panel-card, .wa-card, .inv-card, .cp-patient, .set-member, .odo-stage, .odo-card, .fin-chart, .ag-cal, .ag-mini),
+.sd-admin :is(.saas-panel-card, .sd-admin-metric) {
+  background-color: color-mix(in srgb, var(--bg-secondary) 86%, transparent) !important;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 0 #ffffff26, 0 1px 2px #0000000a, 0 18px 40px -32px #0000004d;
+}
+body:not(.light-theme) :is(.clinic-experience, .sd-admin) :is(.saas-panel-card, .wa-card, .inv-card, .cp-patient, .set-member, .odo-stage, .odo-card, .fin-chart, .ag-cal, .ag-mini, .sd-admin-metric) {
+  box-shadow: inset 0 1px 0 #ffffff12, 0 18px 40px -30px #000c;
+}
+
+/* ── Marca de la barra lateral ── */
+.clinic-experience .clinic-brand-logo, .sd-admin .saas-brand-logo { filter: drop-shadow(0 6px 12px #1e7bff40); }
+
+/* ── Barra superior de progreso al cambiar de sección ── */
+.panel-route-bar { position: fixed; left: 0; top: 0; z-index: 1500; height: 2px; width: 100%; transform-origin: left; background: linear-gradient(90deg, #2fe0c8, #1e7bff, #6b5cf6); animation: shell-route 700ms var(--shell-ease) forwards; pointer-events: none; }
+@keyframes shell-route { 0% { transform: scaleX(0); opacity: 1; } 70% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-ambient i, .panel-route-bar { animation: none !important; }
+  .panel-nav-pill { transition: opacity 120ms ease; }
+}
+@media (max-width: 900px) { .panel-ambient i { filter: blur(50px); } }
+
+/* La animación de entrada de las secciones no debe mostrar la barra de carga inactiva. */
+.sd-bar:not(.is-active) { animation: none !important; opacity: 0 !important; }
+.sd-overview-hero .sd-eyebrow { text-transform: none !important; }
+.sd-overview-hero .sd-eyebrow::first-letter { text-transform: uppercase; }
+.sd-admin .saas-user-email { display: block; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; }
+
+/* Cambio de tema: la vista nueva se repinta en vivo en cada fotograma bajo el recorte de la
+   transición. Mientras dura, las auroras se congelan y el vidrio pasa a fondo casi opaco, que
+   es lo que hacía caer los fotogramas (desenfoques recalculados a pantalla completa). */
+:root.theme-switching *, :root.theme-switching *::before, :root.theme-switching *::after {
+  animation-play-state: paused !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+:root.theme-switching .panel-ambient i { will-change: auto; }
+:root.theme-switching :is(.clinic-experience, .sd-admin) :is(.saas-sidebar, .clinic-header, .saas-main-header) {
+  background: color-mix(in srgb, var(--bg-secondary) 94%, transparent) !important;
+}

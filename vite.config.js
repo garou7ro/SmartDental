@@ -17,9 +17,16 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  // El servidor de SmartDental solo acepta peticiones desde los puertos 3000 y 3001:
+  // con strictPort, Vite avisa si el puerto está ocupado en vez de usar otro que no funcionaría.
   server: {
     port: 3000,
+    strictPort: true,
     open: true,
+  },
+  preview: {
+    port: 3000,
+    strictPort: true,
   },
   build: {
     rollupOptions: {

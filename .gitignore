@@ -34,6 +34,7 @@ ref_latex/
 docs/
 scripts/
 tests/
+entrega/
 DOCUMENTACION_TECNICA.md
 TECHNICAL_DOCUMENTATION.md
 smartdental_spec.json

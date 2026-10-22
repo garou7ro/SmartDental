@@ -6,17 +6,26 @@ Sistema integral de gestión para clínicas y consultorios odontológicos. Dise�
 
 ## 📸 Capturas de pantalla
 
-### Vista Principal
+### Vista Principal & Presentación
 ![SmartDental - Landing](screenshots/landing.jpg)
 
 ### Módulos y Servicios
 ![SmartDental - Módulos](screenshots/modules.jpg)
 
-### Acceso a la Plataforma
-![SmartDental - Login](screenshots/login.jpg)
+### Panel Clínico - Resumen de Operaciones
+![SmartDental - Panel Clínico](screenshots/panel-clinico-dashboard.jpg)
 
-### Panel de Administración
-![SmartDental - Panel](screenshots/panel.jpg)
+### Odontograma Digital e Interactivo
+![SmartDental - Odontograma](screenshots/panel-clinico-odontograma.jpg)
+
+### Agenda y Calendario de Citas
+![SmartDental - Agenda](screenshots/panel-clinico-agenda.jpg)
+
+### Directorio de Pacientes
+![SmartDental - Directorio de Pacientes](screenshots/panel-clinico-pacientes.jpg)
+
+### Panel de Administración Global
+![SmartDental - Panel Administrador](screenshots/panel-administrador.jpg)
 
 ---
 
@@ -28,7 +37,7 @@ Sistema integral de gestión para clínicas y consultorios odontológicos. Dise�
 - **Control de Inventario:** Registro y monitoreo de insumos odontológicos, entradas, salidas y alertas de stock bajo.
 - **Finanzas y Facturación:** Registro de ingresos, gastos, métodos de pago y balance financiero de la clínica.
 - **Integración de WhatsApp:** Canales de comunicación directa para confirmación de citas y atención al paciente.
-- **Gestión Multi-rol:** Perfiles adaptados con permisos específicos para Administradores, Odontólogos y Personal de Recepción/Asistentes.
+- **Gestión Multi-rol:** Perfiles adaptados con permisos específicos para Administradores de clínica, Odontólogos y Personal de Recepción/Asistentes.
 
 ---
 

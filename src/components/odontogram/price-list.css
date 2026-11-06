@@ -1,0 +1,53 @@
+/* Tarifario de la clínica (PriceListEditor) */
+.pl { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; }
+.pl-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.pl-search { display: flex; align-items: center; gap: 8px; flex: 1 1 220px; max-width: 340px; min-height: 40px; padding: 0 12px; border: 1px solid var(--saas-border); border-radius: 12px; background: var(--saas-bg); color: var(--saas-text-muted); }
+.pl-search input { flex: 1; min-width: 0; border: 0; background: none; color: var(--saas-text); font: 13.5px var(--font-body); outline: none; }
+.pl-search:focus-within { border-color: var(--saas-accent); box-shadow: 0 0 0 3px var(--saas-accent-glow); }
+.pl-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12.5px; color: var(--saas-text-muted); }
+.pl-pct { display: inline-flex; align-items: center; height: 34px; padding: 0 8px; border: 1px solid var(--saas-border); border-radius: 10px; background: var(--saas-bg); }
+.pl-pct input { width: 40px; border: 0; background: none; color: var(--saas-text); font: 600 13px var(--font-mono, monospace); text-align: right; outline: none; }
+.pl-pct i { font-style: normal; color: var(--saas-text-muted); }
+.pl-chip { min-height: 34px; padding: 0 12px; border: 1px solid var(--saas-border); border-radius: 10px; background: var(--bg-secondary); color: var(--saas-text); font: 500 12.5px var(--font-body); cursor: pointer; transition: border-color 160ms ease, background-color 160ms ease; }
+.pl-chip:hover { border-color: color-mix(in srgb, var(--saas-accent) 45%, var(--saas-border)); }
+.pl-chip.is-ghost { border-style: dashed; color: var(--saas-text-muted); }
+.pl-example { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--saas-accent) 8%, transparent); color: var(--saas-text); font-size: 13px; line-height: 1.5; }
+.pl-example svg { flex-shrink: 0; color: var(--saas-accent); }
+.pl-note { margin: 0; font-size: 12.5px; color: var(--saas-text-muted); }
+.pl-grid { columns: 3 300px; column-gap: 12px; }
+.pl-grid > .pl-group { break-inside: avoid; margin-bottom: 12px; }
+.pl-group { display: grid; gap: 6px; padding: 14px; border: 1px solid var(--saas-border); border-radius: 16px; background: var(--saas-bg); }
+.pl-group h4 { margin: 0 0 4px; font: 600 10.5px var(--font-mono, monospace); letter-spacing: .12em; text-transform: uppercase; color: var(--saas-text-muted); }
+.pl-group ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.pl-group li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 4px 6px 8px; border-radius: 10px; transition: background-color 140ms ease; }
+.pl-group li:hover { background: color-mix(in srgb, var(--saas-text) 3%, transparent); }
+.pl-group li.is-invalid { background: color-mix(in srgb, #dc2626 8%, transparent); }
+.pl-name { display: grid; min-width: 0; }
+.pl-name strong { font-size: 13.5px; font-weight: 600; }
+.pl-name small { font-size: 12px; color: var(--saas-text-muted); }
+.pl-reset { margin-left: 6px; padding: 0; border: 0; background: none; color: var(--saas-accent); font: 600 12px var(--font-body); cursor: pointer; }
+.pl-reset:hover { text-decoration: underline; }
+.pl-money { display: inline-flex; flex-shrink: 0; align-items: center; gap: 4px; height: 36px; padding: 0 10px; border: 1px solid var(--saas-border); border-radius: 10px; background: var(--bg-secondary); transition: border-color 140ms ease, box-shadow 140ms ease; }
+.pl-money i { font-style: normal; font-size: 11.5px; color: var(--saas-text-muted); }
+.pl-money input { width: 74px; border: 0; background: none; color: var(--saas-text); font: 600 14px var(--font-mono, monospace); text-align: right; outline: none; -moz-appearance: textfield; }
+.pl-money input::-webkit-inner-spin-button, .pl-money input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.pl-money:focus-within { border-color: var(--saas-accent); box-shadow: 0 0 0 3px var(--saas-accent-glow); }
+.is-invalid .pl-money { border-color: #dc2626; }
+.pl.is-readonly .pl-money { background: transparent; border-color: transparent; }
+.pl-group.is-own { column-span: all; border-style: dashed; }
+.pl-own-hint { margin: 0 0 4px; font-size: 12.5px; line-height: 1.5; color: var(--saas-text-muted); }
+.pl-own-name { flex: 1; min-width: 0; height: 36px; padding: 0 10px; border: 1px solid var(--saas-border); border-radius: 10px; background: var(--bg-secondary); color: var(--saas-text); font: 500 13.5px var(--font-body); outline: none; }
+.pl-own-name:focus { border-color: var(--saas-accent); box-shadow: 0 0 0 3px var(--saas-accent-glow); }
+.pl-remove { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border: 0; border-radius: 9px; background: none; color: var(--saas-text-muted); cursor: pointer; }
+.pl-remove:hover { background: color-mix(in srgb, #dc2626 10%, transparent); color: #dc2626; }
+.pl-add { display: inline-flex; align-items: center; justify-self: start; gap: 6px; min-height: 36px; padding: 0 14px; border: 1px dashed color-mix(in srgb, var(--saas-accent) 55%, var(--saas-border)); border-radius: 10px; background: none; color: var(--saas-accent); font: 600 13px var(--font-body); cursor: pointer; }
+.pl-add:hover { background: color-mix(in srgb, var(--saas-accent) 8%, transparent); }
+.pl-savebar { position: sticky; bottom: 12px; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px 10px 16px; border: 1px solid var(--saas-border); border-radius: 14px; background: color-mix(in srgb, var(--bg-secondary) 94%, transparent); box-shadow: 0 18px 40px -24px #0006; backdrop-filter: blur(10px); font-size: 13px; opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 180ms ease, transform 220ms cubic-bezier(.23, 1, .32, 1); }
+.pl-savebar.is-visible { opacity: 1; transform: none; pointer-events: auto; }
+.pl-savebar > div { display: flex; gap: 8px; }
+.pl-dialog { width: min(980px, 94vw); }
+.pl-dialog .pl-grid { max-height: 56vh; overflow: auto; padding-right: 4px; }
+@media (max-width: 600px) {
+  .pl-search { max-width: none; }
+  .pl-money input { width: 64px; }
+}

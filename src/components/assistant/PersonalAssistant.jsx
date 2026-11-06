@@ -7,6 +7,14 @@ import { ButtonLabel, ErrorState } from '../ui/Loading';
 import AssistantMark from './AssistantMark';
 import { BrandIcon } from '../icons/BrandIcons';
 import '../../styles/workflows.css';
+/** Formato mínimo de las respuestas del modelo: **negrita**, *cursiva* y viñetas. */
+function RichText({ text = '' }) {
+  return String(text).replace(/^(\s*)[*-]\s+/gm, '$1• ').split(/(\*\*[^*]+\*\*|\*[^*\n]+\*)/g).map((part, i) => {
+    if (/^\*\*[^*]+\*\*$/.test(part)) return <strong key={i}>{part.slice(2, -2)}</strong>;
+    if (/^\*[^*\n]+\*$/.test(part)) return <em key={i}>{part.slice(1, -1)}</em>;
+    return <React.Fragment key={i}>{part}</React.Fragment>;
+  });
+}
 const when = value => value ? new Date(value).toLocaleString('es-PE',{dateStyle:'medium',timeStyle:'short'}) : '';
 export const workflow = (action,payload={}) => invokeFunction('appointment-workflow',{action,payload});
 export function WorkflowResult({ data, kind, onConfirmed }) {
@@ -48,20 +56,21 @@ export default function PersonalAssistant({ compact=false }) {
   const { clinicSlug } = useParams();
   const [instruction,setInstruction] = useState('');
   const [messages,setMessages] = useState([]);
-  const action = useAsyncAction(text => invokeFunction('nlp-assistant',{action:'parse',instruction:text}));
+  const action = useAsyncAction((text,history) => invokeFunction('nlp-assistant',{action:'parse',instruction:text,history}));
   const last = useRef(null);
   useEffect(() => {setMessages([]);setInstruction('');},[profile?.id,profile?.clinic_id]);
   useEffect(() => {last.current?.scrollIntoView?.({block:'nearest'});},[messages]);
   const send = async event => {
     event.preventDefault();if(!instruction.trim() || action.pending)return;
     const text=instruction.trim();setInstruction('');setMessages(items => [...items,{sender:'user',text}]);
-    const result=await action.run(text);
+    const history=messages.filter(item => !item.error).slice(-8).map(item => ({role:item.sender === 'user' ? 'user' : 'assistant',text:item.text}));
+    const result=await action.run(text,history);
     if(!result.skipped)setMessages(items => [...items,{sender:'assistant',text:result.ok ? result.data?.message || 'Consulta procesada.' : result.error.message,response:result.ok ? result.data : null,error:!result.ok}]);
   };
   return <section className={`wf-assistant ${compact ? 'is-compact' : ''}`} aria-label="Asistente personal"><header className="wf-assistant-head"><AssistantMark size={40} state={action.pending ? 'thinking' : 'idle'} /><div><span className="odo-kicker">Tu asistente personal</span><h2>Denti</h2><p>{profile?.role === 'clinic_admin' ? 'Gestiona tu clínica con confirmaciones claras.' : 'Tus citas, tus pacientes y tus permisos.'}</p></div></header>
-    <div className="wf-assistant-log" role="log" aria-live="polite">{!messages.length && <div className="wf-assistant-welcome"><h3>¿Qué necesitas resolver?</h3><p>Consulta tu agenda o prepara un cambio. Revisarás las citas afectadas antes de confirmar una operación.</p><div className="wf-suggestions">{['Muéstrame mis citas de hoy','Cancela mis citas restantes de hoy y avisa a mis pacientes','Busca horarios para reprogramar mis citas de mañana durante la próxima semana'].map(text => <button type="button" key={text} onClick={() => setInstruction(text)}>{text}</button>)}</div></div>}
-      {messages.map((item,index) => <article key={index} className={`wf-assistant-message ${item.sender === 'user' ? 'is-user' : ''} ${item.error ? 'is-error' : ''}`}><strong>{item.sender === 'user' ? 'Tú' : 'Denti'}</strong><p>{item.text}</p>{item.response?.type === 'preview' && <WorkflowResult data={item.response.data} kind={item.response.kind || item.response.data?.kind} />}{item.response?.type === 'appointments' && <ul>{(item.response.data?.appointments || []).map(appointment => <li key={appointment.id}>{appointment.paciente_nombre || 'Paciente asignado'} · {when(appointment.fecha_hora)} · {({pending:'Pendiente',confirmed:'Confirmada',cancelled:'Cancelada'})[appointment.estado] || appointment.estado}</li>)}</ul>}{item.response?.type === 'slots' && <div><p className="wf-muted">Son alternativas disponibles al consultar. No representan reservas.</p><ul>{(item.response.data?.slots || []).slice(0,20).map(slot => <li key={`${slot.doctor_id}:${slot.start}`}>{when(slot.start)} — {when(slot.end)}</li>)}</ul><Link className="saas-btn saas-btn-secondary" to={`/${clinicSlug}/workspace`}>Elegir propuesta en mi espacio</Link></div>}{item.response?.type === 'conversation' && <Link to={`/${clinicSlug}/whatsapp`} className="saas-btn saas-btn-secondary">Abrir mis conversaciones</Link>}</article>)}
-      {action.pending && <p role="status">Consultando información autorizada…</p>}<div ref={last} />
-    </div><form className="wf-assistant-form" onSubmit={send}><label htmlFor={compact ? 'assistant-compact' : 'assistant-workspace'}>Instrucción para Denti</label><div><textarea id={compact ? 'assistant-compact' : 'assistant-workspace'} value={instruction} onChange={e => setInstruction(e.target.value)} maxLength={4000} rows={2} placeholder="Por ejemplo: muéstrame mis citas de hoy" disabled={action.pending} /><button className="saas-btn saas-btn-primary" type="submit" disabled={action.pending || !instruction.trim()} aria-label="Enviar instrucción"><BrandIcon name="send" size={18} /></button></div></form>
+    <div className="wf-assistant-log" role="log" aria-live="polite">{!messages.length && <div className="wf-assistant-welcome"><h3>¿Qué necesitas resolver?</h3><p>Pregúntame lo que necesites sobre tu agenda y tus pacientes, como se lo dirías a un colega. Si algo implica cambiar citas, te mostraré lo afectado antes de que lo confirmes.</p><div className="wf-suggestions">{['¿Qué citas tengo hoy?','¿Cuántas citas siguen pendientes de confirmar esta semana?','Busca horarios libres para la próxima semana'].map(text => <button type="button" key={text} onClick={() => setInstruction(text)}>{text}</button>)}</div></div>}
+      {messages.map((item,index) => <article key={index} className={`wf-assistant-message ${item.sender === 'user' ? 'is-user' : ''} ${item.error ? 'is-error' : ''}`}><strong>{item.sender === 'user' ? 'Tú' : 'Denti'}</strong><p>{item.sender === 'user' ? item.text : <RichText text={item.text} />}</p>{item.response?.type === 'preview' && <WorkflowResult data={item.response.data} kind={item.response.kind || item.response.data?.kind} />}{item.response?.type === 'appointments' && <ul>{(item.response.data?.appointments || []).map(appointment => <li key={appointment.id}>{appointment.paciente_nombre || 'Paciente asignado'} · {when(appointment.fecha_hora)} · {({pending:'Pendiente',confirmed:'Confirmada',cancelled:'Cancelada'})[appointment.estado] || appointment.estado}</li>)}</ul>}{item.response?.type === 'slots' && <div><p className="wf-muted">Son alternativas disponibles al consultar. No representan reservas.</p><ul>{(item.response.data?.slots || []).slice(0,20).map(slot => <li key={`${slot.doctor_id}:${slot.start}`}>{slot.doctor_name ? <strong>{slot.doctor_name} · </strong> : null}{when(slot.start)} — {new Date(slot.end).toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'})}</li>)}</ul><Link className="saas-btn saas-btn-secondary" to={`/${clinicSlug}/workspace`}>Elegir propuesta en mi espacio</Link></div>}{item.response?.type === 'conversation' && <Link to={`/${clinicSlug}/whatsapp`} className="saas-btn saas-btn-secondary">Abrir mis conversaciones</Link>}</article>)}
+      {action.pending && <div className="wf-typing" role="status" aria-label="Denti está consultando"><i /><i /><i /></div>}<div ref={last} />
+    </div><form className="wf-assistant-form" onSubmit={send}><label htmlFor={compact ? 'assistant-compact' : 'assistant-workspace'}>Instrucción para Denti</label><div><textarea id={compact ? 'assistant-compact' : 'assistant-workspace'} value={instruction} onChange={e => setInstruction(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} maxLength={4000} rows={compact ? 1 : 2} placeholder="Por ejemplo: muéstrame mis citas de hoy" disabled={action.pending} /><button className="saas-btn saas-btn-primary" type="submit" disabled={action.pending || !instruction.trim()} aria-label="Enviar instrucción"><BrandIcon name="send" size={18} /></button></div></form>
   </section>;
 }

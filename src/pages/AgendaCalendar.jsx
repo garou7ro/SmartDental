@@ -352,16 +352,25 @@ export default function AgendaCalendar() {
     ro.observe(el);
     return () => ro.disconnect();
   }, [view, days.length, citasQuery.isLoading]);
-  const maxLanes = Math.max(1, Math.floor((colWidth || 120) / (view === 'day' ? 150 : 88)));
+  const maxLanes = Math.max(1, Math.floor((colWidth || 120) / (view === 'day' ? 120 : 88)));
 
-  // Al abrir la vista, desplaza la rejilla a la hora actual.
+  // Al abrir una vista o cambiar de periodo, la rejilla arranca en la primera cita visible (o en la
+  // hora actual si es más temprano), para que nunca queden ocultas las citas de la mañana.
+  const scrolledFor = useRef('');
   useEffect(() => {
     const el = gridRef.current;
-    if (!el) return;
-    const minutes = Math.max(0, (now.getHours() - START_HOUR - 1) * 60);
-    el.scrollTop = (minutes / SLOT_MIN) * ROW;
+    if (!el || citasQuery.isLoading) return;
+    const key = `${view}|${days[0]?.toDateString()}|${days.length}`;
+    if (scrolledFor.current === key) return;
+    scrolledFor.current = key;
+    const minutesOf = (d) => d.getHours() * 60 + d.getMinutes() - START_HOUR * 60;
+    const visibleDays = new Set(days.map((d) => d.toDateString()));
+    const starts = citas.map((c) => new Date(c.fecha_hora)).filter((d) => visibleDays.has(d.toDateString())).map(minutesOf);
+    const nowMinutes = visibleDays.has(now.toDateString()) ? minutesOf(now) - 60 : Infinity;
+    const target = Math.min(nowMinutes, ...starts, Infinity);
+    el.scrollTop = Number.isFinite(target) ? (Math.max(0, target - 30) / SLOT_MIN) * ROW : 0;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view]);
+  }, [view, days, citasQuery.isLoading]);
 
   const visible = citas.filter((c) => filter === 'all' || c.estado === filter);
   const stats = {

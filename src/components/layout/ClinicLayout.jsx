@@ -19,14 +19,6 @@ import CommandPalette, { openCommandPalette } from './CommandPalette';
 import { useNavIndicator, useSpotlight } from './panelEffects';
 
 /** Negritas e itálicas simples (**texto**, *texto*) en las respuestas de Denti, sin HTML arbitrario. */
-function RichText({ text = '' }) {
-  return String(text).replace(/^(\s*)[*-]\s+/gm, '$1• ').split(/(\*\*[^*]+\*\*|\*[^*\n]+\*)/g).map((part, i) => {
-    if (/^\*\*[^*]+\*\*$/.test(part)) return <strong key={i}>{part.slice(2, -2)}</strong>;
-    if (/^\*[^*\n]+\*$/.test(part)) return <em key={i}>{part.slice(1, -1)}</em>;
-    return <React.Fragment key={i}>{part}</React.Fragment>;
-  });
-}
-
 export default function ClinicLayout({ children }) {
   const { profile, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -205,7 +197,7 @@ export default function ClinicLayout({ children }) {
       <aside ref={sidebarRef} id="clinic-navigation" className={`saas-sidebar ${sidebarOpen ? 'open' : ''}`} role={sidebarOpen ? 'dialog' : undefined} aria-modal={sidebarOpen ? true : undefined} aria-label="Navegación del consultorio">
         <div className="clinic-brand">
           <img src="/landing/logo-mark-256.webp" alt="" width="34" height="34" className="clinic-brand-logo" />
-          <span>SmartDental<span className="clinic-brand-caption">Tu espacio de trabajo</span></span>
+          <span>SmartDental</span>
           <button ref={closeMenuRef} type="button" className="clinic-icon-button clinic-sidebar-close" aria-label="Cerrar navegación" onClick={() => setSidebarOpen(false)}><BrandIcon name="close" size={20} /></button>
         </div>
         <div className="clinic-identity">

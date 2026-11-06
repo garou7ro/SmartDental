@@ -7,7 +7,6 @@ import useSupabaseQuery from '../hooks/useSupabaseQuery';
 import { unwrap } from '../lib/supabaseErrors';
 import { EmptyState, ErrorState, Skeleton } from '../components/ui/Loading';
 import OdontogramWorkspace from '../components/odontogram/OdontogramWorkspace';
-import { dmft, normalize } from '../lib/odontogram';
 import '../styles/clinic-pages.css';
 
 const initials = (name = '') => name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || 'P';
@@ -33,6 +32,8 @@ export default function ClinicOdontograma() {
   const records=useSupabaseQuery(signal=>supabase.from('patient_clinical_records').select('id,doctor_id,content,updated_at').eq('patient_id',selected.id).abortSignal(signal).then(unwrap),{key:selected?.id,enabled:!!selected && profile?.role==='clinic_admin'});
   useEffect(()=>setRecordId('legacy'),[selected?.id]);
   const selectedRecord=records.data?.find(r=>r.id===recordId);
+  const doctors=useSupabaseQuery(signal=>supabase.from('profiles').select('id,nombre_completo,email').eq('clinic_id',profile.clinic_id).abortSignal(signal).then(unwrap),{key:`doctors:${profile?.clinic_id}`,enabled:profile?.role==='clinic_admin'});
+  const doctorName=id=>{const d=(doctors.data||[]).find(x=>x.id===id);return d?.nombre_completo||d?.email||'Profesional';};
   const clinical = useSupabaseQuery(signal => readClinicalPatient(profile, selected, signal), { key: `${profile?.id}:${selected?.id}`, enabled: !!selected });
 
   const filtered = useMemo(() => {
@@ -68,14 +69,12 @@ export default function ClinicOdontograma() {
         </div>
         <ul className="cp-rail-list">
           {filtered.map((p) => {
-            const idx = dmft(normalize(p.historial_odontograma), 'permanent');
             const active = selected?.id === p.id;
             return (
               <li key={p.id}>
                 <button type="button" className={`cp-rail-item ${active ? 'is-active' : ''}`} aria-current={active ? 'true' : undefined} onClick={() => choose(p.id)}>
                   <span className="cp-avatar" aria-hidden="true">{initials(p.nombre)}</span>
                   <span className="cp-rail-item__text"><strong>{p.nombre}</strong><small>{p.dni ? `DNI ${p.dni}` : 'Sin documento'}</small></span>
-                  {idx.total > 0 && <span className="cp-rail-item__badge" title="Índice CPO-D">{idx.total}</span>}
                 </button>
               </li>
             );
@@ -95,7 +94,7 @@ export default function ClinicOdontograma() {
                 <p>{selected.dni ? `DNI ${selected.dni}` : 'Sin documento registrado'}</p>
               </div>
             </header>
-            {profile?.role==='clinic_admin' && <label className="cp-field"><span>Historial clínico</span><select value={recordId} onChange={e=>setRecordId(e.target.value)}><option value="legacy">Archivo general anterior</option>{(records.data || []).map(r=><option key={r.id} value={r.id}>Profesional {r.doctor_id.slice(0,8)} · {new Date(r.updated_at).toLocaleDateString('es-PE')}</option>)}</select></label>}
+            {profile?.role==='clinic_admin' && (records.data || []).length > 0 && <label className="cp-field cp-odo-source"><span>Ver odontograma de</span><select value={recordId} onChange={e=>setRecordId(e.target.value)}><option value="legacy">Registro general de la clínica</option>{(records.data || []).map(r=><option key={r.id} value={r.id}>Ficha de {doctorName(r.doctor_id)} · actualizada el {new Date(r.updated_at).toLocaleDateString('es-PE',{day:'numeric',month:'short'})}</option>)}</select></label>}
             {records.isError && <ErrorState error={records.error} onRetry={records.refetch}/>}
             {clinical.isLoading ? <Skeleton h={400} /> : clinical.isError ? <ErrorState error={clinical.error} onRetry={clinical.refetch} /> : clinical.data ? <OdontogramWorkspace
               key={`${selected.id}:${recordId}`}

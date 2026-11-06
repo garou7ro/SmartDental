@@ -9,6 +9,8 @@ import { invokeFunction } from '../lib/api';
 import { unwrap } from '../lib/supabaseErrors';
 import { ButtonLabel, ErrorState, Skeleton } from '../components/ui/Loading';
 import { BrandIcon } from '../components/icons/BrandIcons';
+import PriceListEditor from '../components/odontogram/PriceListEditor';
+import usePriceList from '../hooks/usePriceList';
 import '../styles/clinic-pages.css';
 import '../styles/whatsapp.css';
 
@@ -30,6 +32,7 @@ export default function ClinicPreferences() {
     (signal) => invokeFunction('whatsapp-settings',{action:'bot-get'},{signal}).then(data=>data.config),
     { key: `${profile?.clinic_id}|h`, enabled: !!profile?.clinic_id }
   );
+  const priceList = usePriceList(profile?.clinic_id);
   const save = useAsyncAction((values) => supabase.from('clinics').update(values).eq('id', profile.clinic_id).select('id').then(unwrap));
   const upload = useAsyncAction(async (file) => {
     const ext = ({ 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' })[file.type];
@@ -141,6 +144,19 @@ export default function ClinicPreferences() {
           <p className="pref-hours__value">{hours || 'Aún no publicaste tu horario'}</p>
           <p>El horario se publica desde WhatsApp, porque es lo que el bot comparte con tus pacientes.</p>
           <Link className="saas-btn saas-btn-secondary" to={`/${clinicSlug}/whatsapp`}><BrandIcon name="whatsapp" size={16} />Configurar horario</Link>
+        </section>
+
+        <section className="wa-card pref-prices" id="tarifario" aria-label="Tarifario">
+          <div className="pref-prices__head">
+            <div>
+              <span className="odo-kicker">Tarifario</span>
+              <h3>Precios de tus tratamientos</h3>
+              <p>La cotización del odontograma usa estos precios para calcular el presupuesto de cada paciente.</p>
+            </div>
+          </div>
+          {priceList.isLoading ? <Skeleton h={260} r={16} /> : priceList.isError ? <ErrorState error={priceList.error} onRetry={priceList.refetch} title="No se pudo cargar el tarifario" /> : (
+            <PriceListEditor clinicId={profile?.clinic_id} prices={priceList.prices} custom={priceList.custom} available={priceList.available} canEdit={profile?.role === 'clinic_admin'} onSaved={priceList.refetch} />
+          )}
         </section>
       </div>
     </div>

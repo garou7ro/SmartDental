@@ -49,7 +49,6 @@ function BrandPanel() {
         )}
       </div>
       <div className="sd-auth__visual-copy">
-        <span className="sd-auth__pill"><span className="sd-auth__dot" />Software para consultorios odontológicos</span>
         <p className="sd-auth__headline">Tu consultorio dental, en orden.</p>
         <p className="sd-auth__lead">Agenda, fichas con odontograma, inventario y caja en un solo panel, con accesos para tu equipo.</p>
       </div>

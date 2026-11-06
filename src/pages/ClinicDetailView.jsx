@@ -394,7 +394,6 @@ function ClinicDetailView() {
           <img src="/landing/logo-mark-256.webp" alt="" className="saas-brand-logo" />
           <div className="sd-detail-brand__text">
             <span>Expediente</span>
-            <small>Gestión de clínica</small>
           </div>
         </div>
 

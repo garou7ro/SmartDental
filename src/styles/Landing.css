@@ -1430,15 +1430,13 @@ html.lenis body {
    Anillo de luz que se dibuja, diente con giro 360° y destello, nombre que se enfoca.
    Salida: diafragma que se abre desde el diente (máscara animada) + onda expansiva. */
 /* Spot de marca: cortes secos tipo anuncio de TV y barrido hacia la landing */
-.sdl-boot { position:fixed; inset:0; z-index:200; overflow:hidden; background:#05080f; color:#fff; isolation:isolate; user-select:none; }
+.sdl-boot { position:fixed; inset:0; z-index:200; overflow:hidden; background:#05080f; color:#fff; isolation:isolate; user-select:none; cursor:pointer; }
 .sdl-boot.is-leaving { pointer-events:none; animation:sd-boot-wipe 760ms cubic-bezier(.76,0,.24,1) both; }
 .sdl-boot.is-leaving::after { content:''; position:absolute; top:0; bottom:0; left:0; width:6px; z-index:20; background:linear-gradient(#2fe0c8,#1e5bff); box-shadow:0 0 30px #2fe0c8; animation:sd-boot-edge 760ms cubic-bezier(.76,0,.24,1) both; }
 
 /* Cada plano aparece en su instante y queda debajo del siguiente: el corte es seco */
 .sdl-shot { position:absolute; inset:0; display:grid; place-content:center; justify-items:center; padding:24px; background:var(--bg,#05080f); color:var(--fg,#fff); visibility:hidden; animation:sd-boot-on 1ms linear var(--at) forwards; }
 .sdl-boot .sdl-shot__word { margin:0; color:var(--fg,#fff); font:600 1em/0.92 var(--sdl-sans); letter-spacing:-.065em; white-space:nowrap; animation:sd-boot-punch 520ms cubic-bezier(.16,1,.3,1) var(--at) both; }
-.sdl-shot__note { position:absolute; left:clamp(20px,4vw,56px); bottom:clamp(22px,5vh,48px); margin:0; font:11px var(--sdl-mono); letter-spacing:.14em; text-transform:uppercase; opacity:.72; }
-.sdl-shot__note b { font-weight:600; }
 .sdl-shot__dots { display:flex; gap:12px; margin-top:clamp(14px,3vh,28px); animation:sd-boot-punch 520ms cubic-bezier(.16,1,.3,1) calc(var(--at) + 60ms) both; }
 .sdl-shot__dots i { width:clamp(18px,2.4vw,30px); aspect-ratio:1; border-radius:28%; }
 .sdl-shot__dots .is-bad { background:#e5484d; }
@@ -1458,18 +1456,7 @@ html.lenis body {
 .sdl-boot__word { position:relative; display:flex; margin:clamp(14px,2.4vh,26px) 0 0; font:500 clamp(48px,8.5vw,112px)/1 var(--sdl-sans); letter-spacing:-.065em; }
 .sdl-boot__word span { display:inline-block; animation:sd-boot-rise 700ms cubic-bezier(.16,1,.3,1) calc(var(--at) + 160ms) both; }
 .sdl-boot__word .is-accent { background:linear-gradient(110deg,#2fe0c8,#5aa2ff 75%); -webkit-background-clip:text; background-clip:text; color:transparent; animation-delay:calc(var(--at) + 230ms); }
-.sdl-boot__tag { position:relative; margin:14px 0 0; font:11px var(--sdl-mono); letter-spacing:.2em; text-transform:uppercase; color:#ffffff99; animation:sd-boot-rise 700ms cubic-bezier(.16,1,.3,1) calc(var(--at) + 420ms) both; }
 
-/* Marco de emisión y control para saltar */
-.sdl-boot__chrome { position:absolute; top:clamp(18px,3.5vh,32px); left:clamp(20px,4vw,56px); z-index:5; mix-blend-mode:difference; color:#fff; font:10px var(--sdl-mono); letter-spacing:.16em; text-transform:uppercase; }
-.sdl-boot__chrome span { display:flex; align-items:center; gap:8px; }
-.sdl-boot__chrome i { width:7px; height:7px; border-radius:50%; background:#ff3b3b; animation:sd-boot-rec 900ms steps(2,jump-none) infinite; }
-.sdl-boot__skip { position:absolute; right:clamp(20px,4vw,56px); bottom:clamp(18px,4.5vh,44px); z-index:6; display:flex; gap:14px; align-items:center; min-height:42px; padding:9px 18px; border:1px solid #ffffff40; border-radius:99px; color:#fff; background:#05080f8c; backdrop-filter:blur(8px); cursor:pointer; font:13px var(--sdl-sans); transition:background-color 180ms ease, transform 160ms var(--sdl-ease-out); }
-.sdl-boot__skip:hover { background:#05080fcc; }
-.sdl-boot__skip:active { transform:scale(.96); }
-.sdl-boot__skip:focus-visible { outline:2px solid #2fe0c8; outline-offset:4px; }
-.sdl-boot__progress { position:absolute; left:0; right:0; bottom:0; z-index:6; height:3px; background:linear-gradient(90deg,#2fe0c8,#1e5bff); transform-origin:left; animation:sd-boot-progress var(--hold) linear both; }
-.sdl-boot.is-leaving .sdl-boot__skip, .sdl-boot.is-leaving .sdl-boot__progress, .sdl-boot.is-leaving .sdl-boot__chrome { opacity:0; transition:opacity 150ms ease; }
 
 @keyframes sd-boot-on { to { visibility:visible; } }
 @keyframes sd-boot-punch { from { transform:scale(1.22); } to { transform:none; } }
@@ -1478,11 +1465,8 @@ html.lenis body {
 @keyframes sd-boot-bloom { from { opacity:0; transform:scale(.4); } to { opacity:1; transform:none; } }
 @keyframes sd-boot-slam { 0% { opacity:0; transform:scale(2.4) rotateY(-360deg); } 40% { opacity:1; } 100% { opacity:1; transform:none; } }
 @keyframes sd-boot-rise { from { opacity:0; transform:translateY(40%); } to { opacity:1; transform:none; } }
-@keyframes sd-boot-rec { 0% { opacity:1; } 100% { opacity:.15; } }
-@keyframes sd-boot-progress { from { transform:scaleX(0); } to { transform:scaleX(1); } }
 @keyframes sd-boot-wipe { from { clip-path:inset(0 0 0 0); } to { clip-path:inset(0 0 0 100%); } }
 @keyframes sd-boot-edge { from { transform:translateX(0); } to { transform:translateX(100vw); } }
-@media(max-width:559px) { .sdl-shot__note { right:20px; bottom:84px; font-size:9.5px; line-height:1.6; } }
 @media(prefers-reduced-motion:reduce) { .sdl-boot *, .sdl-boot.is-leaving { animation:none!important; transition:none!important; } .sdl-shot { visibility:hidden; } .sdl-shot--logo { visibility:visible; } }
 
 /* ═══ Odontograma 3D ═══ */

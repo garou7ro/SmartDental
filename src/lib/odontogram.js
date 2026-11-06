@@ -4,10 +4,11 @@
  * Versión 2:
  * {
  *   v: 2,
- *   dentition: 'permanent' | 'temporary',
+ *   dentition: 'permanent' | 'temporary' | 'mixed',
  *   teeth: { '16': { whole: { c: 'crown', s: 'good' } | null, surfaces: { O: { c: 'caries', s: 'bad' } }, note: '' } },
  *   notes: 'observaciones generales',
- *   history: [{ at: ISO, by: 'nombre', summary: '…' }]   // últimas 30 versiones guardadas
+ *   history: [{ at: ISO, by: 'nombre', summary: '…' }],  // últimas 30 versiones guardadas
+ *   quotes: [{ id, at, by, lines, subtotal, discount, total }]  // cotizaciones emitidas (src/lib/quote.js)
  * }
  *
  * Convención de la norma técnica del odontograma (MINSA, Perú): rojo = mal estado o hallazgo,
@@ -52,6 +53,27 @@ export const LAYOUT = {
   },
 };
 
+export const DENTITIONS = { permanent: 'Permanente', temporary: 'Temporal', mixed: 'Mixta' };
+
+/**
+ * Arcadas a dibujar según la dentición, en orden de pantalla. En la dentición mixta las piezas
+ * temporales quedan entre las permanentes, como en la ficha clínica impresa.
+ */
+export function archSets(dentition) {
+  const p = LAYOUT.permanent;
+  const t = LAYOUT.temporary;
+  if (dentition === 'temporary') return [{ key: 'tu', label: 'Arcada superior temporal', rows: t.upper }, { key: 'tl', label: 'Arcada inferior temporal', rows: t.lower, occlusal: true }];
+  if (dentition === 'mixed') {
+    return [
+      { key: 'pu', label: 'Arcada superior permanente', rows: p.upper },
+      { key: 'tu', label: 'Arcada superior temporal', rows: t.upper, compact: true },
+      { key: 'tl', label: 'Arcada inferior temporal', rows: t.lower, compact: true, occlusal: true },
+      { key: 'pl', label: 'Arcada inferior permanente', rows: p.lower },
+    ];
+  }
+  return [{ key: 'pu', label: 'Arcada superior', rows: p.upper }, { key: 'pl', label: 'Arcada inferior', rows: p.lower, occlusal: true }];
+}
+
 export const quadrantOf = (fdi) => Math.floor(fdi / 10);
 export const isUpper = (fdi) => [1, 2, 5, 6].includes(quadrantOf(fdi));
 /** En pantalla, los cuadrantes derechos del paciente quedan a la izquierda: su mesial mira a la derecha. */
@@ -78,13 +100,20 @@ export function surfaceLabel(fdi, surface) {
   return SURFACE_NAMES[surface];
 }
 
-export const emptyModel = () => ({ v: 2, dentition: 'permanent', teeth: {}, notes: '', history: [] });
+export const emptyModel = () => ({ v: 2, dentition: 'permanent', teeth: {}, notes: '', history: [], quotes: [] });
 
 /** Convierte cualquier formato guardado al modelo v2. */
 export function normalize(raw) {
   if (!raw || Array.isArray(raw) || typeof raw !== 'object') return emptyModel();
   if (raw.v === 2) {
-    return { ...emptyModel(), ...raw, teeth: { ...(raw.teeth || {}) }, history: Array.isArray(raw.history) ? raw.history : [] };
+    return {
+      ...emptyModel(),
+      ...raw,
+      dentition: DENTITIONS[raw.dentition] ? raw.dentition : 'permanent',
+      teeth: { ...(raw.teeth || {}) },
+      history: Array.isArray(raw.history) ? raw.history : [],
+      quotes: Array.isArray(raw.quotes) ? raw.quotes : [],
+    };
   }
   // Formato anterior: { '16': 'caries', '26': 'crown' }
   const model = emptyModel();
@@ -152,7 +181,10 @@ export function marks(model) {
   return out;
 }
 
-/** Índice CPO-D (permanentes) o ceo-d (temporales): cariadas, perdidas/extracción, obturadas. */
+/**
+ * Índice CPO-D (permanentes) o ceo-d (temporales): cariadas, perdidas/extracción, obturadas.
+ * En dentición mixta se calculan los dos por separado (ver indices()).
+ */
 export function dmft(model, dentition = model.dentition) {
   const temporary = dentition === 'temporary';
   let decayed = 0;
@@ -167,6 +199,11 @@ export function dmft(model, dentition = model.dentition) {
   });
   return { decayed, missing, filled, total: decayed + missing + filled, label: temporary ? 'ceo-d' : 'CPO-D' };
 }
+
+/** Índices a mostrar para la dentición actual: uno, o CPO-D y ceo-d en la mixta. */
+export const indices = (model) => (model.dentition === 'mixed'
+  ? [dmft(model, 'permanent'), dmft(model, 'temporary')]
+  : [dmft(model, model.dentition === 'temporary' ? 'temporary' : 'permanent')]);
 
 export function summarize(model) {
   const all = marks(model);
@@ -191,6 +228,19 @@ export function toArchMap(model) {
     else if (Object.values(t.surfaces || {}).length || c === 'endodontics') map[n] = 'restoration';
   });
   return map;
+}
+
+/** Tono clínico de cada pieza permanente para el visor 3D: 'bad' si tiene algún hallazgo en rojo, 'good' si solo tratamientos en azul. */
+export function toArchTones(model) {
+  const tones = {};
+  Object.entries(model.teeth).forEach(([fdi, t]) => {
+    const n = Number(fdi);
+    if (isTemporary(n)) return;
+    const all = [t.whole, ...Object.values(t.surfaces || {})].filter(Boolean);
+    if (!all.length) return;
+    tones[n] = all.some((m) => m.s === 'bad') ? 'bad' : 'good';
+  });
+  return tones;
 }
 
 export function withHistory(model, by) {

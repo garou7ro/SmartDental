@@ -8,10 +8,13 @@ import useAsyncAction from '../../hooks/useAsyncAction';
 import { ButtonLabel } from '../ui/Loading';
 import ToothCell, { OdontogramDefs } from './ToothCell';
 import ConditionGlyph from './ConditionGlyph';
+import QuotePanel from './QuotePanel';
+import printNode from '../../lib/printNode';
 import {
-  CONDITIONS, LAYOUT, STATUS, SURFACES, applyTool, dmft, marks, normalize, setToothNote, summarize,
-  surfaceLabel, toArchMap, toothName, toothRecord, withHistory,
+  CONDITIONS, DENTITIONS, STATUS, SURFACES, applyTool, archSets, indices, isUpper, marks, normalize, setToothNote, summarize,
+  surfaceLabel, toArchMap, toArchTones, toothName, toothRecord, withHistory,
 } from '../../lib/odontogram';
+import { withQuote, formatSoles } from '../../lib/quote';
 import './odontogram.css';
 
 const Odontogram3D = lazy(() => import('../landing/Odontogram3D'));
@@ -19,9 +22,9 @@ const Odontogram3D = lazy(() => import('../landing/Odontogram3D'));
 const TOOLS = [...Object.keys(CONDITIONS), 'clear'];
 const strip = ({ history, ...rest }) => JSON.stringify(rest);
 
-function Arch({ rows, model, selected, hovered, onSelect, onApply, onHover, label }) {
+function Arch({ rows, model, selected, hovered, onSelect, onApply, onHover, label, compact }) {
   return (
-    <div className="odo-arch" role="group" aria-label={label}>
+    <div className={`odo-arch ${compact ? 'is-compact' : ''}`} role="group" aria-label={label}>
       {rows.map((row, i) => (
         <div key={i} className={`odo-quadrant ${i === 0 ? 'is-right' : 'is-left'}`}>
           {row.map((fdi) => (
@@ -50,7 +53,15 @@ function Arch({ rows, model, selected, hovered, onSelect, onApply, onHover, labe
 export default function OdontogramWorkspace({ patient, author, onSaved, readOnly = false }) {
   const { profile } = useAuth();
   const initial = useMemo(() => normalize(patient?.historial_odontograma), [patient?.id]); // eslint-disable-line react-hooks/exhaustive-deps
-  const [model, setModel] = useState(initial);
+  const [model, setModelState] = useState(initial);
+  const modelRef = useRef(initial);
+  const setModel = useCallback((next) => {
+    const value = typeof next === 'function' ? next(modelRef.current) : next;
+    modelRef.current = value;
+    setModelState(value);
+  }, []);
+  // Contenido clínico vigente: se actualiza tras cada guardado para no sobrescribir con datos viejos.
+  const contentRef = useRef(patient?.clinical_content || {});
   const [baseline, setBaseline] = useState(() => strip(initial));
   const [tool, setTool] = useState('caries');
   const [status, setStatus] = useState(CONDITIONS.caries.status);
@@ -70,38 +81,30 @@ export default function OdontogramWorkspace({ patient, author, onSaved, readOnly
     setSelected(null);
     undo.current = [];
     redo.current = [];
-  }, [initial]);
+  }, [initial, setModel]);
+  useEffect(() => { contentRef.current = patient?.clinical_content || {}; }, [patient?.clinical_content]);
 
   const dirty = strip(model) !== baseline;
-  const layout = LAYOUT[model.dentition];
-  const order = useMemo(() => [...layout.upper.flat(), ...layout.lower.flat()], [layout]);
-  const index = dmft(model);
+  const sets = useMemo(() => archSets(model.dentition), [model.dentition]);
+  const order = useMemo(() => sets.flatMap((a) => a.rows.flat()), [sets]);
+  const shownIndices = indices(model);
   const allMarks = marks(model);
   const counts = useMemo(() => allMarks.reduce((acc, m) => ({ ...acc, [m.c]: (acc[m.c] || 0) + 1 }), {}), [allMarks]);
 
   const commit = useCallback((next) => {
-    setModel((prev) => {
-      if (next === prev) return prev;
-      undo.current = [...undo.current.slice(-49), prev];
-      redo.current = [];
-      return next;
-    });
+    const prev = modelRef.current;
+    if (next === prev) return;
+    undo.current = [...undo.current.slice(-49), prev];
+    redo.current = [];
+    setModel(next);
     force((n) => n + 1);
-  }, []);
+  }, [setModel]);
 
   const apply = useCallback((fdi, surface) => {
     setSelected(fdi);
     if (readOnly) return;
-    setModel((prev) => {
-      const next = applyTool(prev, fdi, tool, status, surface);
-      if (next !== prev) {
-        undo.current = [...undo.current.slice(-49), prev];
-        redo.current = [];
-      }
-      return next;
-    });
-    force((n) => n + 1);
-  }, [tool, status, readOnly]);
+    commit(applyTool(modelRef.current, fdi, tool, status, surface));
+  }, [tool, status, readOnly, commit]);
 
   const pickTool = (id) => {
     setTool(id);
@@ -111,14 +114,14 @@ export default function OdontogramWorkspace({ patient, author, onSaved, readOnly
   const doUndo = () => {
     const prev = undo.current.pop();
     if (!prev) return;
-    redo.current.push(model);
+    redo.current.push(modelRef.current);
     setModel(prev);
     force((n) => n + 1);
   };
   const doRedo = () => {
     const next = redo.current.pop();
     if (!next) return;
-    undo.current.push(model);
+    undo.current.push(modelRef.current);
     setModel(next);
     force((n) => n + 1);
   };
@@ -158,25 +161,39 @@ export default function OdontogramWorkspace({ patient, author, onSaved, readOnly
     return () => window.removeEventListener('beforeunload', warn);
   }, [dirty]);
 
-  const save = useAsyncAction((value) => writeClinicalPatient(profile, patient, { historial_odontograma: value }));
-  const handleSave = async () => {
-    if (!patient || !dirty) return;
-    const value = withHistory(model, author);
+  const save = useAsyncAction((value) => writeClinicalPatient(profile, { ...patient, clinical_content: contentRef.current }, { historial_odontograma: value }));
+  const persist = async (value, success) => {
     const res = await save.run(value);
-    if (res.skipped) return;
+    if (res.skipped) return false;
     if (!res.ok) {
-      sileo.error({ title: 'No se pudo guardar el odontograma', description: res.error.message });
-      return;
+      sileo.error({ title: 'No se pudo guardar', description: res.error.message });
+      return false;
     }
     if (!Array.isArray(res.data) || !res.data.length) {
       sileo.error({ title: 'No se confirmó el guardado', description: 'Tu usuario no tiene permiso para modificar esta ficha.' });
-      return;
+      return false;
     }
+    contentRef.current = { ...contentRef.current, historial_odontograma: value };
     setModel(value);
     setBaseline(strip(value));
     onSaved?.(value);
-    sileo.success({ title: 'Odontograma guardado', description: `${patient.nombre}: ${summarize(value)}.` });
+    sileo.success(success);
+    return true;
   };
+  const handleSave = async () => {
+    if (!patient || !dirty) return;
+    const value = withHistory(modelRef.current, author);
+    await persist(value, { title: 'Odontograma guardado', description: `${patient.nombre}: ${summarize(value)}.` });
+  };
+  // Guardar una cotización también guarda los cambios pendientes del odontograma.
+  const saveQuote = async (quote, notes) => {
+    if (!patient) return;
+    const base = dirty ? withHistory(modelRef.current, author) : modelRef.current;
+    const value = withQuote(base, quote, { by: author, notes });
+    await persist(value, { title: 'Cotización guardada', description: `${patient.nombre}: ${formatSoles(quote.total)} aproximado.` });
+  };
+  const odoRef = useRef(null);
+  const printChart = () => printNode(odoRef.current, 'odo');
   const discard = () => {
     setModel(initial);
     setBaseline(strip(initial));
@@ -187,11 +204,18 @@ export default function OdontogramWorkspace({ patient, author, onSaved, readOnly
 
   const record = selected ? toothRecord(model, selected) : null;
   const archMap = useMemo(() => toArchMap(model), [model]);
+  const archTones = useMemo(() => toArchTones(model), [model]);
+  const labelsRef = useRef({});
+  const ARCH_FDI = useMemo(() => archSets('permanent').flatMap((a) => a.rows.flat()), []);
   const onSelect3d = useCallback((fdi) => setSelected(fdi), []);
 
   return (
-    <div className="odo" data-dirty={dirty || undefined}>
+    <div className="odo" data-dirty={dirty || undefined} ref={odoRef}>
       <OdontogramDefs />
+      <header className="odo-print-head" aria-hidden="true">
+        <div><b>{patient?.nombre}</b><span>{patient?.dni ? `DNI ${patient.dni}` : 'Sin documento'}</span></div>
+        <div><span>Odontograma · notación FDI · {DENTITIONS[model.dentition].toLowerCase()}</span><time>{new Date().toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' })}</time></div>
+      </header>
 
       {/* Barra de herramientas */}
       <div className="odo-toolbar" role="toolbar" aria-label="Herramientas del odontograma">
@@ -245,7 +269,7 @@ export default function OdontogramWorkspace({ patient, author, onSaved, readOnly
             </div>
             {view === 'chart' ? (
               <div className="odo-seg" role="radiogroup" aria-label="Dentición">
-                {[['permanent', 'Permanente'], ['temporary', 'Temporal']].map(([key, label]) => (
+                {Object.entries(DENTITIONS).map(([key, label]) => (
                   <button key={key} type="button" role="radio" aria-checked={model.dentition === key} className={model.dentition === key ? 'is-active' : ''}
                     onClick={() => { if (model.dentition !== key) { commit({ ...model, dentition: key }); setSelected(null); } }}>{label}</button>
                 ))}
@@ -263,17 +287,37 @@ export default function OdontogramWorkspace({ patient, author, onSaved, readOnly
             <div className="odo-chart" ref={chartRef} onClick={(e) => { if (e.target === e.currentTarget) setSelected(null); }}>
               <span className="odo-side is-r" aria-hidden="true">Derecha del paciente</span>
               <span className="odo-side is-l" aria-hidden="true">Izquierda del paciente</span>
-              <Arch rows={layout.upper} model={model} selected={selected} hovered={hovered} onSelect={setSelected} onApply={apply} onHover={setHovered} label="Arcada superior" />
-              <div className="odo-occlusal" aria-hidden="true"><span>Plano oclusal</span></div>
-              <Arch rows={layout.lower} model={model} selected={selected} hovered={hovered} onSelect={setSelected} onApply={apply} onHover={setHovered} label="Arcada inferior" />
+              {sets.map((a) => (
+                <React.Fragment key={a.key}>
+                  {a.occlusal && <div className="odo-occlusal" aria-hidden="true"><span>Plano oclusal</span></div>}
+                  <Arch rows={a.rows} model={model} selected={selected} hovered={hovered} onSelect={setSelected} onApply={apply} onHover={setHovered} label={a.label} compact={a.compact} />
+                </React.Fragment>
+              ))}
               {hovered && <p className="odo-hoverline" aria-hidden="true"><b>{hovered}</b> {toothName(hovered)}</p>}
             </div>
           ) : (
             <div className="odo-3d">
               <Suspense fallback={<div className="odo-3d__loading">Preparando la arcada…</div>}>
-                <Odontogram3D data={archMap} selected={selected} view={view3d} onSelect={onSelect3d} reducedMotion={window.matchMedia('(prefers-reduced-motion: reduce)').matches} />
+                <Odontogram3D data={archMap} tones={archTones} selected={selected} view={view3d} onSelect={onSelect3d} labelsRef={labelsRef} reducedMotion={window.matchMedia('(prefers-reduced-motion: reduce)').matches} />
               </Suspense>
-              <p className="odo-3d__hint">Arrastra para girar · Toca una pieza para inspeccionarla · Dentición permanente</p>
+              <div className="odo-3d__labels" role="group" aria-label="Piezas dentales en 3D">
+                {ARCH_FDI.map((f) => {
+                  const rec = model.teeth[String(f)];
+                  const gone = rec?.whole?.c === 'missing';
+                  const tone = gone ? 'gone' : archTones[f] || '';
+                  return (
+                    <button key={f} type="button" ref={(el) => { labelsRef.current[f] = el; }}
+                      className={`odo-3d__num ${tone ? `is-${tone}` : ''} ${selected === f ? 'is-selected' : ''}`}
+                      aria-pressed={selected === f} aria-label={`Pieza ${f}`} onClick={() => setSelected(f)}>{f}</button>
+                  );
+                })}
+              </div>
+              <ul className="odo-3d__legend" aria-label="Leyenda 3D">
+                <li><i className="is-bad" />Hallazgo</li>
+                <li><i className="is-good" />Tratamiento</li>
+                <li><i className="is-gone" />Ausente</li>
+              </ul>
+              <p className="odo-3d__hint">Arrastra para girar · toca una pieza</p>
             </div>
           )}
 
@@ -303,7 +347,7 @@ export default function OdontogramWorkspace({ patient, author, onSaved, readOnly
                   const mark = record.surfaces[s];
                   return (
                     <button key={s} type="button" className={`odo-surface-row ${mark ? `is-${mark.s}` : ''}`} onClick={() => apply(selected, s)} disabled={readOnly}>
-                      <span className="odo-surface-row__letter">{s === 'L' && selected < 30 ? 'P' : s}</span>
+                      <span className="odo-surface-row__letter">{s === 'L' && isUpper(selected) ? 'P' : s}</span>
                       <span className="odo-surface-row__name">{surfaceLabel(selected, s)}</span>
                       <span className="odo-surface-row__state">{mark ? CONDITIONS[mark.c].label : 'Sana'}</span>
                     </button>
@@ -331,14 +375,18 @@ export default function OdontogramWorkspace({ patient, author, onSaved, readOnly
 
       {/* Índice, notas e historial */}
       <div className="odo-foot">
-        <section className="odo-card odo-index" aria-label={`Índice ${index.label}`}>
-          <span className="odo-kicker">Índice {index.label}</span>
-          <div className="odo-index__grid">
-            {[['C', index.decayed, model.dentition === 'temporary' ? 'Cariadas' : 'Cariadas'], ['P', index.missing, model.dentition === 'temporary' ? 'Extracción indicada' : 'Perdidas'], ['O', index.filled, 'Obturadas']].map(([k, v, l]) => (
-              <div key={k}><b>{v}</b><span>{l}</span></div>
-            ))}
-            <div className="is-total"><b>{index.total}</b><span>Total</span></div>
-          </div>
+        <section className="odo-card odo-index" aria-label={`Índice ${shownIndices.map((i) => i.label).join(' y ')}`}>
+          {shownIndices.map((index) => (
+            <React.Fragment key={index.label}>
+              <span className="odo-kicker">Índice {index.label}</span>
+              <div className="odo-index__grid">
+                {[['C', index.decayed, 'Cariadas'], ['P', index.missing, index.label === 'ceo-d' ? 'Extracción indicada' : 'Perdidas'], ['O', index.filled, 'Obturadas']].map(([k, v, l]) => (
+                  <div key={k}><b>{v}</b><span>{l}</span></div>
+                ))}
+                <div className="is-total"><b>{index.total}</b><span>Total</span></div>
+              </div>
+            </React.Fragment>
+          ))}
           <p>{summarize(model)}</p>
         </section>
         <label className="odo-card odo-notes">
@@ -361,6 +409,8 @@ export default function OdontogramWorkspace({ patient, author, onSaved, readOnly
         </section>
       </div>
 
+      <QuotePanel model={model} patient={patient} readOnly={readOnly} saving={save.pending} onSaveQuote={saveQuote} />
+
       {!readOnly && (
         <div className={`odo-savebar ${dirty ? 'is-visible' : ''}`} role="region" aria-label="Cambios sin guardar" aria-hidden={!dirty}>
           <span><i />Cambios sin guardar en el odontograma de <strong>{patient?.nombre}</strong></span>
@@ -372,7 +422,7 @@ export default function OdontogramWorkspace({ patient, author, onSaved, readOnly
           </div>
         </div>
       )}
-      <button type="button" className="odo-print saas-btn saas-btn-secondary" onClick={() => window.print()}>Imprimir</button>
+      <button type="button" className="odo-print saas-btn saas-btn-secondary" onClick={printChart}>Imprimir odontograma</button>
     </div>
   );
 }

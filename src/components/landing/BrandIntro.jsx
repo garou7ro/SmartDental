@@ -15,11 +15,11 @@ export function shouldShowIntro() {
  * así los cortes no dependen de JavaScript y no hay fundidos que cuesten fotogramas.
  */
 const SHOTS = [
-  { word: 'Citas.', note: 'Agenda por profesional', bg: '#05080f', fg: '#ffffff' },
-  { word: 'Pacientes.', note: 'Ficha clínica completa', bg: '#2fe0c8', fg: '#05080f' },
-  { word: 'Odontograma.', note: 'FDI · rojo hallazgo · azul tratamiento', bg: '#f5f3ef', fg: '#05080f', dots: true },
-  { word: 'Inventario.', note: 'Alertas de stock mínimo', bg: '#1e5bff', fg: '#ffffff' },
-  { word: 'Caja.', note: 'Ingresos del día y del mes', bg: '#05080f', fg: '#2fe0c8' },
+  { word: 'Citas.', bg: '#05080f', fg: '#ffffff' },
+  { word: 'Pacientes.', bg: '#2fe0c8', fg: '#05080f' },
+  { word: 'Odontograma.', bg: '#f5f3ef', fg: '#05080f', dots: true },
+  { word: 'Inventario.', bg: '#1e5bff', fg: '#ffffff' },
+  { word: 'Caja.', bg: '#05080f', fg: '#2fe0c8' },
 ];
 const CUT_MS = 230;
 const CLOSE_AT = SHOTS.length * CUT_MS; // «Todo, en orden.»
@@ -64,12 +64,12 @@ export default function BrandIntro({ onDone }) {
   }, [finish]);
 
   return (
-    <div className={`sdl-boot ${leaving ? 'is-leaving' : ''}`} aria-label="Bienvenido a SmartDental" style={{ '--hold': `${HOLD_MS}ms` }}>
+    // Un clic en cualquier parte o Esc la cierran antes de tiempo.
+    <div className={`sdl-boot ${leaving ? 'is-leaving' : ''}`} aria-label="Bienvenido a SmartDental" onClick={finish} role="presentation">
       {SHOTS.map((shot, i) => (
         <section key={shot.word} className="sdl-shot" style={{ '--at': `${i * CUT_MS}ms`, '--bg': shot.bg, '--fg': shot.fg }} aria-hidden="true">
           <h2 className="sdl-shot__word" style={{ fontSize: size(shot.word) }}>{shot.word}</h2>
           {shot.dots && <span className="sdl-shot__dots"><i className="is-bad" /><i className="is-good" /></span>}
-          <p className="sdl-shot__note"><b>{String(i + 1).padStart(2, '0')}</b> / {String(SHOTS.length).padStart(2, '0')} — {shot.note}</p>
         </section>
       ))}
 
@@ -84,14 +84,8 @@ export default function BrandIntro({ onDone }) {
         <p className="sdl-boot__word" aria-label="SmartDental">
           <span aria-hidden="true">Smart</span><span aria-hidden="true" className="is-accent">Dental</span>
         </p>
-        <p className="sdl-boot__tag">Software para consultorios odontológicos</p>
       </section>
 
-      <div className="sdl-boot__chrome" aria-hidden="true">
-        <span><i />SmartDental · Spot 01</span>
-      </div>
-      <button type="button" className="sdl-boot__skip" onClick={finish}>Saltar intro <span aria-hidden="true">↗</span></button>
-      <span className="sdl-boot__progress" aria-hidden="true" />
     </div>
   );
 }

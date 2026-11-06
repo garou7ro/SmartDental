@@ -175,6 +175,9 @@ body:not(.light-theme) .cp-pill.is-cancelled { color: #f87171; }
 .pref-logo .saas-btn { gap: 8px; border-radius: 13px; }
 .pref-logo small { font-size: 11px; color: var(--saas-text-muted); }
 .pref-hours { grid-column: 1 / -1; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+.pref-prices { grid-column: 1 / -1; gap: 14px; min-width: 0; }
+.pref-prices__head h3 { margin: 4px 0 2px; font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
+.pref-prices__head p { margin: 0; font-size: 13px; color: var(--saas-text-muted); }
 .pref-hours .odo-kicker, .pref-hours p { grid-column: 1; }
 .pref-hours .saas-btn { grid-column: 2; grid-row: 1 / span 3; gap: 8px; border-radius: 13px; color: #128c7e; }
 .pref-hours__value { margin: 0; font-size: 22px !important; font-weight: 450; letter-spacing: -.03em; color: var(--saas-text) !important; }

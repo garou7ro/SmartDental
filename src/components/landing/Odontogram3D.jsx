@@ -135,7 +135,7 @@ function archCurve(upper) {
   return new THREE.CatmullRomCurve3(pts, false, 'centripetal');
 }
 
-export default function Odontogram3D({ data, selected, view = 'oclusal', onSelect, reducedMotion = false, onReady, labelsRef }) {
+export default function Odontogram3D({ data, tones, selected, view = 'oclusal', onSelect, reducedMotion = false, onReady, labelsRef }) {
   const mountRef = useRef(null);
   const api = useRef({});
 
@@ -179,6 +179,9 @@ export default function Odontogram3D({ data, selected, view = 'oclusal', onSelec
       caries: new THREE.MeshStandardMaterial({ color: 0x3a2418, roughness: 0.9 }),
       resin: new THREE.MeshPhysicalMaterial({ color: 0x7fc8f2, roughness: 0.12, clearcoat: 1, envMapIntensity: 1.2 }),
       ghost: new THREE.MeshPhysicalMaterial({ color: 0x9aa3b5, roughness: 0.4, transparent: true, opacity: 0.18, depthWrite: false }),
+      // Tinte clínico (convención del odontograma): rojo = hallazgo, azul = tratamiento realizado.
+      toneBad: new THREE.MeshPhysicalMaterial({ color: 0xff7a7a, vertexColors: true, roughness: 0.32, clearcoat: 0.8, clearcoatRoughness: 0.12, emissive: 0x7a0f0f, emissiveIntensity: 0.35, envMapIntensity: 0.8 }),
+      toneGood: new THREE.MeshPhysicalMaterial({ color: 0x86a8ff, vertexColors: true, roughness: 0.32, clearcoat: 0.8, clearcoatRoughness: 0.12, emissive: 0x0f2a7a, emissiveIntensity: 0.3, envMapIntensity: 0.8 }),
       gum: new THREE.MeshPhysicalMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.42, clearcoat: 0.35, clearcoatRoughness: 0.3, sheen: 0.4, sheenColor: new THREE.Color(0xffd6dc), envMapIntensity: 0.7 }),
     };
     const outlineMat = () => new THREE.MeshBasicMaterial({ color: 0x6b5cf6, side: THREE.BackSide, transparent: true, opacity: 0, depthWrite: false });
@@ -394,9 +397,14 @@ export default function Odontogram3D({ data, selected, view = 'oclusal', onSelec
       t.implant.add(collar, post);
     };
 
+    let toneMap = tones || null;
     const applyState = (t, s) => {
       if (s === 'implant') ensureImplant(t);
-      t.crown.material = s === 'crown' ? M.gold : s === 'implant' ? M.ceramic : s === 'missing' ? M.ghost : M.enamel;
+      const tone = toneMap?.[t.fdi];
+      t.crown.material = s === 'missing' ? M.ghost
+        : tone === 'bad' ? M.toneBad
+        : tone === 'good' && s !== 'implant' ? M.toneGood
+        : s === 'crown' ? M.gold : s === 'implant' ? M.ceramic : M.enamel;
       t.implant.visible = s === 'implant';
       t.lesion.visible = s === 'caries';
       t.inlay.visible = s === 'restoration';
@@ -548,8 +556,9 @@ export default function Odontogram3D({ data, selected, view = 'oclusal', onSelec
     io.observe(mount);
 
     api.current = {
-      setData(map) {
-        teeth.forEach((t) => applyState(t, map[t.fdi] || 'healthy'));
+      setData(map, nextTones) {
+        if (nextTones !== undefined) toneMap = nextTones;
+        teeth.forEach((t) => applyState(t, map?.[t.fdi] || 'healthy'));
         requestRender();
       },
       setSelected(f) {
@@ -592,7 +601,7 @@ export default function Odontogram3D({ data, selected, view = 'oclusal', onSelec
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onSelect, reducedMotion, onReady, labelsRef]);
 
-  useEffect(() => { api.current.setData?.(data); }, [data]);
+  useEffect(() => { api.current.setData?.(data, tones ?? null); }, [data, tones]);
   useEffect(() => { api.current.setSelected?.(selected); }, [selected]);
   useEffect(() => { api.current.setView?.(view); }, [view]);
 

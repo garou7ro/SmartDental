@@ -67,7 +67,7 @@ body:not(.light-theme) .odo {
 .odo-hoverline b { font-family: var(--font-mono, monospace); color: var(--saas-accent); margin-right: 4px; }
 
 /* Pieza */
-.odo-tooth { display: block; flex-shrink: 0; width: var(--cell, 48px); height: auto; overflow: visible; cursor: pointer; outline: none; transition: transform 260ms var(--odo-spring); }
+.odo-tooth { display: block; flex-shrink: 0; width: calc(var(--cell, 48px) * var(--cell-scale, 1)); height: auto; overflow: visible; cursor: pointer; outline: none; transition: transform 260ms var(--odo-spring); }
 .odo-tooth__bg { fill: transparent; stroke: transparent; transition: fill 200ms ease, stroke 200ms ease; }
 .odo-tooth.is-hovered .odo-tooth__bg { fill: color-mix(in srgb, var(--saas-accent) 7%, transparent); }
 .odo-tooth.is-selected .odo-tooth__bg { fill: color-mix(in srgb, var(--saas-accent) 12%, transparent); stroke: var(--saas-accent); stroke-width: 1.4; }
@@ -97,7 +97,19 @@ body:not(.light-theme) .odo-surface:hover { filter: brightness(1.35); }
 .odo-3d .sdl-odo3d__canvas { position: absolute; inset: 0; opacity: 1; }
 .odo-3d .sdl-odo3d__canvas canvas { display: block; width: 100%; height: 100%; }
 .odo-3d__loading { display: grid; place-items: center; height: 100%; font-size: 13px; color: var(--saas-text-muted); }
-.odo-3d__hint { position: absolute; left: 50%; bottom: 12px; translate: -50% 0; margin: 0; padding: 6px 12px; border-radius: 99px; font-size: 11px; color: var(--saas-text-muted); background: color-mix(in srgb, var(--bg-secondary) 85%, transparent); border: 1px solid var(--saas-border); white-space: nowrap; pointer-events: none; }
+.odo-3d__hint { position: absolute; right: 12px; bottom: 12px; margin: 0; padding: 6px 12px; border-radius: 99px; font-size: 11px; color: var(--saas-text-muted); background: color-mix(in srgb, var(--bg-secondary) 85%, transparent); border: 1px solid var(--saas-border); white-space: nowrap; pointer-events: none; }
+.odo-3d__labels { position: absolute; inset: 0; pointer-events: none; }
+.odo-3d__num { position: absolute; left: 0; top: 0; display: grid; place-items: center; min-width: 26px; height: 20px; padding: 0 5px; border: 1px solid var(--saas-border); border-radius: 99px; background: color-mix(in srgb, var(--bg-secondary) 88%, transparent); color: var(--saas-text-muted); font: 600 10px var(--font-mono, monospace); cursor: pointer; pointer-events: auto; transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease; }
+.odo-3d__num.is-bad { border-color: #dc2626; background: #dc2626; color: #fff; box-shadow: 0 4px 12px -4px #dc2626; }
+.odo-3d__num.is-good { border-color: #1d4ed8; background: #1d4ed8; color: #fff; box-shadow: 0 4px 12px -4px #1d4ed8; }
+.odo-3d__num.is-gone { border-style: dashed; color: var(--saas-text-muted); text-decoration: line-through; }
+.odo-3d__num.is-selected { outline: 2px solid var(--saas-accent); outline-offset: 2px; }
+.odo-3d__legend { position: absolute; bottom: 12px; left: 12px; display: flex; gap: 12px; margin: 0; padding: 6px 12px; border: 1px solid var(--saas-border); border-radius: 99px; background: color-mix(in srgb, var(--bg-secondary) 88%, transparent); list-style: none; font-size: 11.5px; color: var(--saas-text); }
+.odo-3d__legend li { display: inline-flex; align-items: center; gap: 6px; }
+.odo-3d__legend i { width: 10px; height: 10px; border-radius: 3px; }
+.odo-3d__legend .is-bad { background: #dc2626; }
+.odo-3d__legend .is-good { background: #1d4ed8; }
+.odo-3d__legend .is-gone { border: 1.5px dashed var(--saas-text-muted); }
 
 /* ── Inspector ── */
 .odo-inspector { position: sticky; top: 12px; display: grid; gap: 14px; padding: 18px; border: 1px solid var(--saas-border); border-radius: var(--odo-radius); background: var(--bg-secondary); animation: odo-in 360ms var(--odo-ease); }
@@ -174,4 +186,92 @@ body:not(.light-theme) .odo-surface:hover { filter: brightness(1.35); }
   .odo-body { grid-template-columns: 1fr; }
   .odo, .odo * { color: #000 !important; }
   .odo-chart { background: #fff; }
+}
+
+/* Dentición mixta: las arcadas temporales, centradas y algo más pequeñas, entre las permanentes */
+.odo-arch.is-compact { --cell-scale: .84; justify-content: center; margin: -2px 0; }
+
+/* ── Cotización ── */
+.quote { gap: 16px; }
+.quote__head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.quote__head h3 { margin: 4px 0 2px; font-size: 22px; font-weight: 600; letter-spacing: -.02em; }
+.quote__head p { max-width: 62ch; margin: 0; font-size: 13px; line-height: 1.55; color: var(--saas-text-muted); }
+.quote__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.quote__body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, .95fr); gap: 16px; align-items: start; }
+.quote__items { display: grid; gap: 12px; min-width: 0; }
+.quote__list { display: grid; gap: 6px; max-height: 420px; margin: 0; padding: 0; overflow: auto; list-style: none; }
+.quote__list label { display: grid; grid-template-columns: auto 38px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid var(--saas-border); border-left: 3px solid #dc2626; border-radius: 12px; background: var(--saas-bg); cursor: pointer; transition: opacity 160ms ease, border-color 160ms ease; }
+.quote__list li.is-off label { opacity: .5; border-left-color: var(--saas-border); }
+.quote__list input, .quote__chip input { width: 17px; height: 17px; accent-color: var(--saas-accent); }
+.quote__tooth { display: grid; place-items: center; height: 26px; border-radius: 8px; background: color-mix(in srgb, #dc2626 12%, var(--bg-secondary)); color: #b91c1c; font: 700 12px var(--font-mono, monospace); }
+.quote__what { display: grid; min-width: 0; }
+.quote__what strong, .quote__what small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quote__what strong { font-size: 13.5px; font-weight: 600; }
+.quote__what small { font-size: 12px; color: var(--saas-text-muted); }
+.quote__amount { font: 600 12.5px var(--font-mono, monospace); }
+.quote__extras-title { font: 600 10.5px var(--font-mono, monospace); letter-spacing: .12em; text-transform: uppercase; color: var(--saas-text-muted); }
+.quote__extras { display: flex; flex-wrap: wrap; gap: 8px; }
+.quote__chip.is-on { border-color: color-mix(in srgb, var(--saas-accent) 55%, var(--saas-border)); background: color-mix(in srgb, var(--saas-accent) 8%, var(--saas-bg)); }
+.quote__chip { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 6px 12px; border: 1px solid var(--saas-border); border-radius: 99px; background: var(--saas-bg); font-size: 12.5px; cursor: pointer; }
+.quote__summary { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--saas-border); border-radius: 16px; background: var(--saas-bg); }
+.quote__summary table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.quote__summary th { padding: 0 6px 8px; font: 500 10px var(--font-mono, monospace); letter-spacing: .1em; text-transform: uppercase; color: var(--saas-text-muted); text-align: right; }
+.quote__summary th:first-child, .quote__summary td:first-child { text-align: left; }
+.quote__summary td { padding: 8px 6px; border-top: 1px solid var(--saas-border); text-align: right; vertical-align: top; }
+.quote__summary td small { display: block; font-size: 11px; color: var(--saas-text-muted); }
+.quote__summary td:last-child { font-family: var(--font-mono, monospace); font-weight: 600; white-space: nowrap; }
+.quote__empty { color: var(--saas-text-muted); text-align: center !important; }
+.quote-money { display: inline-flex; align-items: center; gap: 4px; padding: 0 8px; border: 1px solid var(--saas-border); border-radius: 9px; background: var(--bg-secondary); }
+.quote-money i { font-style: normal; font-size: 11px; color: var(--saas-text-muted); }
+.quote-money input { width: 74px; min-height: 30px; border: 0; background: none; color: var(--saas-text); font: 600 12.5px var(--font-mono, monospace); text-align: right; outline: none; }
+.quote-money.is-inline input { width: 58px; }
+.quote-money.is-pct input { width: 44px; }
+.quote-money:focus-within { border-color: var(--saas-accent); box-shadow: 0 0 0 3px var(--saas-accent-glow); }
+.quote__totals { display: grid; gap: 6px; }
+.quote__totals > div, .quote__totals > label { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; }
+.quote__totals b { font-family: var(--font-mono, monospace); }
+.quote__totals .is-total { padding-top: 10px; border-top: 1px solid var(--saas-border); font-size: 15px; font-weight: 600; }
+.quote__totals .is-total b { font-size: 19px; color: var(--saas-accent); }
+.quote__notes textarea { min-height: 54px; }
+.quote__last { margin: 0; font-size: 12px; color: var(--saas-text-muted); }
+.quote-warning { margin: 0; padding: 9px 12px; border-radius: 10px; background: color-mix(in srgb, #d97706 12%, transparent); color: color-mix(in srgb, #b45309 80%, var(--saas-text)); font-size: 12.5px; line-height: 1.5; }
+.quote-prices { width: min(640px, 92vw); }
+.quote-prices__grid { display: grid; gap: 6px; max-height: 52vh; overflow: auto; padding-right: 4px; }
+.quote-prices__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px; border: 1px solid var(--saas-border); border-radius: 12px; }
+.quote-prices__row > span:first-child { display: grid; }
+.quote-prices__row strong { font-size: 13.5px; font-weight: 600; }
+.quote-prices__row small { font-size: 12px; color: var(--saas-text-muted); }
+.quote-prices__foot { display: flex; justify-content: flex-end; gap: 8px; }
+.quote-doc, .odo-print-head { display: none; }
+@media (max-width: 980px) { .quote__body { grid-template-columns: 1fr; } }
+
+/* ── Impresión: solo el fragmento copiado a #sd-print-root (ver src/lib/printNode.js) ── */
+@media print {
+  body.sd-printing { background: #fff !important; }
+  body.sd-printing > :not(#sd-print-root) { display: none !important; }
+  #sd-print-root { display: block; color: #000; }
+  #sd-print-root[data-mode='odo'] .quote, #sd-print-root[data-mode='odo'] .odo-timeline, #sd-print-root[data-mode='odo'] .odo-print { display: none !important; }
+  #sd-print-root .odo-print-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid #0e8c80; }
+  #sd-print-root .odo-print-head div { display: grid; gap: 2px; }
+  #sd-print-root .odo-print-head div:last-child { text-align: right; }
+  #sd-print-root .odo-print-head b { font-size: 15pt; }
+  #sd-print-root .odo-print-head span, #sd-print-root .odo-print-head time { font-size: 9.5pt; color: #444; }
+  #sd-print-root textarea::placeholder { color: transparent; }
+  #sd-print-root .quote-doc { display: block; padding: 4mm 6mm; color: #000; font: 11pt/1.45 var(--font-body, sans-serif); }
+  .quote-doc header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 2px solid #0e8c80; }
+  .quote-doc header > div { display: flex; align-items: center; gap: 10px; }
+  .quote-doc header > div:last-child { flex-direction: column; align-items: flex-end; gap: 0; }
+  .quote-doc header b { font-size: 15pt; }
+  .quote-doc header span { font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 9pt; color: #0e8c80; }
+  .quote-doc dl { display: flex; gap: 28px; margin: 14px 0; }
+  .quote-doc dt { font-size: 8.5pt; text-transform: uppercase; letter-spacing: .08em; color: #555; }
+  .quote-doc dd { margin: 0; font-weight: 600; }
+  .quote-doc table { width: 100%; border-collapse: collapse; }
+  .quote-doc th { padding: 6px; border-bottom: 1px solid #333; font-size: 9pt; text-align: left; }
+  .quote-doc td { padding: 6px; border-bottom: 1px solid #ddd; }
+  .quote-doc th:nth-child(n+3), .quote-doc td:nth-child(n+3) { text-align: right; }
+  .quote-doc tfoot td { border: 0; text-align: right; }
+  .quote-doc tfoot .is-total td { padding-top: 10px; border-top: 2px solid #0e8c80; font-size: 13pt; font-weight: 700; }
+  .quote-doc__notes { margin: 14px 0 0; padding: 8px 10px; border-left: 3px solid #0e8c80; background: #f3f6f9; }
+  .quote-doc__legal { margin: 18px 0 0; font-size: 8.5pt; color: #555; }
 }

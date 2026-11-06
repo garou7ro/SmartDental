@@ -1,0 +1,831 @@
+% =====================================================================
+%  Informe técnico — SmartDental
+%  Asignatura: Gestión de Proyectos · Semana 8 · Modalidad individual
+%  Compilación: pdflatex informe && biber informe && pdflatex informe && pdflatex informe
+% =====================================================================
+\documentclass[11pt]{article}
+\usepackage{sd-estilo}
+\usepackage[style=apa,backend=biber]{biblatex}
+\addbibresource{referencias.bib}
+\hypersetup{pdftitle={SmartDental — Informe técnico},pdfauthor={Ronal Abelin Larico Ccaso}}
+
+% Entidad del modelo de datos: \entidad[opciones]{nombre}{titulo}{campos}
+\tikzset{
+  ent/.style={draw=sdline,line width=0.7pt,rounded corners=0pt,fill=white,inner sep=0pt,align=left,font=\sffamily\scriptsize},
+  rel/.style={-{Latex[length=2mm]},draw=sdmuted,line width=0.6pt},
+  caja/.style={draw=sdline,line width=0.7pt,rounded corners=3pt,fill=white,align=center,font=\sffamily\footnotesize,inner sep=6pt},
+  cajaf/.style={caja,fill=sdsoft},
+  flecha/.style={-{Latex[length=2.2mm]},draw=sdmuted,line width=0.7pt},
+}
+\newcommand{\entidad}[4][]{%
+  \node[ent,#1,text width=3.25cm,inner sep=4pt,fill=white] (#2) {#4};
+  \node[anchor=south west,fill=sdink,text=white,font=\sffamily\scriptsize\bfseries,minimum width=3.25cm+8pt,inner sep=3pt,text width=3.25cm,rounded corners=0pt] at (#2.north west) {#3};}
+\newcommand{\pk}[1]{\textcolor{sdteal}{\bfseries #1}}
+\newcommand{\fk}[1]{\textcolor{sdblue}{#1}}
+
+\begin{document}
+
+\sdportada{Informe técnico}{SmartDental}{Sistema web multiclínica para la gestión de consultorios odontológicos}
+
+% ---------------------------------------------------------------------
+\pagenumbering{roman}
+\section*{Resumen}
+\addcontentsline{toc}{section}{Resumen}
+
+SmartDental es una aplicación web que reúne en un solo panel la agenda, las fichas de pacientes, el odontograma, el inventario de insumos, la caja de ingresos y la atención por WhatsApp de un consultorio odontológico. Está organizada como una plataforma \emph{multiclínica}: cada consultorio trabaja con sus propios datos y su propio equipo, mientras que un administrador general gestiona las clínicas, sus planes y la operación de la plataforma.
+
+El proyecto se desarrolló de forma individual entre junio y octubre de 2026 con un enfoque ágil por incrementos. El frontend está construido con React y Vite; los datos, la autenticación y la lógica de servidor se apoyan en Supabase (PostgreSQL con seguridad a nivel de fila, \emph{Edge Functions} en Deno, almacenamiento y tiempo real). Este informe documenta la gestión del proyecto (alcance, entregables, cronograma, recursos, responsables y riesgos), el análisis y el diseño, la implementación de los módulos, las pruebas realizadas y sus resultados. La versión documentada supera las 114 pruebas automatizadas del proyecto y sus flujos principales se validaron sobre una clínica real con datos de demostración.
+
+\textbf{Palabras clave:} gestión de proyectos, software odontológico, odontograma, arquitectura multiclínica, Supabase, React.
+
+\section*{Abstract}
+\addcontentsline{toc}{section}{Abstract}
+
+SmartDental is a web application that brings together appointment scheduling, patient records, a dental chart, supply inventory, cash income and WhatsApp messaging for a dental practice. It is a \emph{multi-clinic} platform: each practice works with its own data and staff, while a platform administrator manages clinics, plans and operations. The project was carried out individually between June and October 2026 using an incremental agile approach, with React and Vite on the frontend and Supabase (PostgreSQL with row-level security, Deno Edge Functions, storage and realtime) on the backend. This report documents project management, analysis and design, implementation, testing and results. The documented version passes all 114 automated tests and its main workflows were validated on a real clinic account using demonstration data.
+
+\textbf{Keywords:} project management, dental software, dental chart, multi-tenant architecture, Supabase, React.
+
+\clearpage
+\tableofcontents
+\clearpage
+\listoffigures
+\listoftables
+\clearpage
+\pagenumbering{arabic}
+
+% =====================================================================
+\section{Descripción del proyecto}
+% =====================================================================
+
+\subsection{Nombre del software}
+
+\textbf{SmartDental} — sistema web multiclínica para la gestión de consultorios odontológicos. La versión documentada es la \textbf{1.0.0}, según el archivo \codigo{package.json}.
+
+\begin{sdnota}[Repositorio del proyecto]
+\url{https://github.com/garou7ro/SmartDental}
+\end{sdnota}
+
+\subsection{Problemática abordada}
+
+Muchos consultorios dentales pequeños e independientes todavía se gestionan con \textbf{métodos anticuados}: agendas y fichas clínicas en papel, cuadernos de citas y hojas de Excel que actualiza una sola persona en una sola computadora. Estos métodos funcionan mientras el consultorio es pequeño, pero se vuelven un problema a medida que crecen los pacientes, el personal y la información que hay que conservar.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  prob/.style={draw=sdline,line width=0.7pt,rounded corners=3pt,fill=white,text width=4.45cm,minimum height=2.05cm,align=left,inner sep=7pt,font=\sffamily\scriptsize},
+  tit/.style={font=\sffamily\small\bfseries,text=sdink}]
+  \node[prob] (p1) at (0,0) {{\color{sdred}\bfseries\small Pacientes que olvidan sus citas}\\[3pt]No hay confirmación ni seguimiento de la cita: el paciente no asiste y el horario se pierde.};
+  \node[prob,right=0.35cm of p1] (p2) {{\color{sdred}\bfseries\small Sin seguimiento del paciente}\\[3pt]La evolución de cada pieza y los tratamientos realizados quedan en hojas sueltas.};
+  \node[prob,right=0.35cm of p2] (p3) {{\color{sdred}\bfseries\small Información dispersa}\\[3pt]Papel, Excel y WhatsApp personal: los datos se duplican, se pierden o no están a mano.};
+  \node[prob,below=0.35cm of p1] (p4) {{\color{sdred}\bfseries\small Agenda desordenada}\\[3pt]Citas superpuestas porque el equipo no ve la misma agenda al mismo tiempo.};
+  \node[prob,right=0.35cm of p4] (p5) {{\color{sdred}\bfseries\small Insumos y caja sin control}\\[3pt]El material se agota sin aviso y los ingresos no se registran de forma ordenada.};
+  \node[prob,right=0.35cm of p5] (p6) {{\color{sdred}\bfseries\small Sin trazabilidad}\\[3pt]No queda registro de quién atendió, modificó o confirmó cada cosa.};
+\end{tikzpicture}
+\caption{Problemas habituales de un consultorio gestionado con papel y Excel}\label{fig:problemas}
+\end{figure}
+
+En consecuencia, el consultorio pierde citas e ingresos, el odontólogo no dispone de una historia clínica completa al atender, y el titular no tiene datos para tomar decisiones. SmartDental busca resolver esta situación reuniendo toda la operación del consultorio en un único sistema web, accesible para todo el equipo.
+
+\subsection{Justificación}
+
+Una solución web centralizada permite que todo el equipo de un consultorio trabaje sobre la misma información desde cualquier navegador, sin instalar programas en cada equipo. El modelo multiclínica, además, permite ofrecer el sistema como servicio a varios consultorios con un costo mensual accesible (planes de S/~70 y S/~100 definidos en el propio software), lo que hace sostenible su mantenimiento.
+
+Desde la gestión de proyectos, SmartDental es un caso adecuado para aplicar los conceptos de la asignatura: tiene un alcance con varios módulos que deben priorizarse, depende de servicios de terceros (Supabase, Meta, proveedores de IA) que introducen riesgos externos, maneja datos clínicos sensibles que imponen requisitos no funcionales estrictos de seguridad y privacidad, y se construyó en incrementos con entregables verificables \parencite{pmi2021,sommerville2016}.
+
+\subsection{Objetivos}
+
+\subsubsection*{Objetivo general}
+Desarrollar e implementar una aplicación web multiclínica que centralice la gestión clínica, administrativa y de comunicación de consultorios odontológicos, garantizando el aislamiento de los datos de cada clínica.
+
+\subsubsection*{Objetivos específicos}
+\begin{enumerate}[label=\textbf{OE\arabic*.},leftmargin=3.2em]
+  \item Implementar el acceso por roles (administrador de plataforma, administrador de clínica, odontólogo y recepcionista) con aislamiento de datos por clínica en la base de datos.
+  \item Construir los módulos clínicos: agenda de citas, directorio y ficha de pacientes, y odontograma digital con historial.
+  \item Construir los módulos de organización: inventario con alertas de stock, caja de ingresos y atención de WhatsApp por conversación.
+  \item Construir la consola del administrador de plataforma para gestionar clínicas, planes, suscripciones, cobros, auditoría y respaldos.
+  \item Verificar el funcionamiento mediante pruebas automatizadas y validación de los flujos principales en un entorno real.
+\end{enumerate}
+
+% =====================================================================
+\section{Gestión del proyecto}
+% =====================================================================
+
+\subsection{Enfoque de gestión}
+
+El proyecto se gestionó con un enfoque \textbf{ágil e incremental} inspirado en Scrum \parencite{schwaber2020}, adaptado a un equipo de una sola persona. Al no existir un equipo con roles separados, se conservaron los elementos que aportan valor a un desarrollador individual:
+
+\begin{itemize}
+  \item Un \textbf{backlog priorizado} de funcionalidades, derivado de la especificación inicial del producto (\codigo{smartdental\_spec.json}).
+  \item \textbf{Incrementos} de una a dos semanas, cada uno terminado con una versión que compila y puede probarse.
+  \item Una \textbf{definición de terminado}: el cambio compila, pasa las pruebas automatizadas existentes y su flujo se revisa en el navegador.
+  \item \textbf{Control de cambios en la base de datos} mediante migraciones SQL fechadas, que sirven además como registro objetivo de los hitos del proyecto.
+\end{itemize}
+
+\subsection{Alcance}
+
+\begin{table}[H]
+\centering\small
+\caption{Alcance del proyecto}\label{tab:alcance}
+\begin{tabularx}{\linewidth}{@{}P{0.47\linewidth}L@{}}
+\toprule
+\textbf{Dentro del alcance} & \textbf{Fuera del alcance de esta versión} \\
+\midrule
+Sitio público de presentación del producto con planes y contacto. &
+Facturación electrónica con valor tributario. \\
+Inicio de sesión, recuperación y cambio de contraseña. &
+Pasarela de pago en línea para las suscripciones. \\
+Consola del administrador de plataforma: clínicas, planes, suscripciones, cobros, auditoría, respaldos y ajustes. &
+Aplicación móvil nativa (el sistema es web y adaptable). \\
+Panel de clínica: resumen, mi espacio, agenda, pacientes, odontograma, inventario, caja, WhatsApp, equipo, preferencias y cuenta. &
+Kárdex completo de inventario con historial de movimientos. \\
+Asistente personal «Denti» con modelo de lenguaje, que consulta datos autorizados y solo propone cambios con confirmación. &
+Ejecución autónoma de cambios por inteligencia artificial sin confirmación humana. \\
+Cotización del tratamiento a partir del odontograma, con tarifario por clínica. &
+Comprobantes de pago con validez tributaria. \\
+Aislamiento de datos por clínica mediante seguridad a nivel de fila (RLS). &
+Restauración automática de respaldos (la exportación sí está incluida). \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsubsection*{Estructura de desglose del trabajo (EDT)}
+
+La \cref{fig:edt} descompone el alcance en paquetes de trabajo. Cada paquete terminal se corresponde con uno o más entregables verificables.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  n0/.style={caja,fill=sdink,text=white,font=\sffamily\small\bfseries,minimum width=3.4cm},
+  n1/.style={caja,fill=sdsoft,font=\sffamily\fontsize{6.6}{8}\selectfont\bfseries,text width=1.75cm,inner sep=4pt,minimum height=1.05cm},
+  n2/.style={font=\sffamily\fontsize{6.6}{8.4}\selectfont,align=left,text width=1.9cm,anchor=north},
+  linea/.style={draw=sdmuted,line width=0.6pt}]
+  \node[n0] (r) at (0,0) {1. SmartDental};
+  \foreach \x/\id/\t in {-6.6/a/1.1 Gestión,-4.4/b/1.2 Análisis y diseño,-2.2/c/1.3 Plataforma y seguridad,0/d/1.4 Módulos clínicos,2.2/e/1.5 Organización e integraciones,4.4/f/1.6 Consola de plataforma,6.6/g/1.7 Pruebas y cierre}{
+    \node[n1] (\id) at (\x,-1.7) {\t};
+    \draw[linea] (r.south) -- ++(0,-0.4) -| (\id.north);
+  }
+  \node[n2] at ([yshift=-0.2cm]a.south) {Plan y backlog\\Cronograma\\Riesgos\\Seguimiento};
+  \node[n2] at ([yshift=-0.2cm]b.south) {Requisitos\\Arquitectura\\Modelo de datos\\Prototipos UI};
+  \node[n2] at ([yshift=-0.2cm]c.south) {Autenticación\\Roles\\Multiclínica\\Políticas RLS};
+  \node[n2] at ([yshift=-0.2cm]d.south) {Agenda\\Pacientes\\Odontograma\\Mi espacio};
+  \node[n2] at ([yshift=-0.2cm]e.south) {Inventario\\Caja\\WhatsApp\\Asistente Denti};
+  \node[n2] at ([yshift=-0.2cm]f.south) {Clínicas y planes\\Suscripciones\\Cobros\\Auditoría};
+  \node[n2] at ([yshift=-0.2cm]g.south) {Pruebas\\Validación real\\Manual\\Sustentación};
+\end{tikzpicture}
+\caption{Estructura de desglose del trabajo}\label{fig:edt}
+\end{figure}
+
+\subsection{Entregables}
+
+\begin{table}[H]
+\centering\small
+\caption{Entregables del proyecto}\label{tab:entregables}
+\begin{tabularx}{\linewidth}{@{}p{0.6cm}P{3.6cm}LP{2.6cm}@{}}
+\toprule
+\textbf{N.º} & \textbf{Entregable} & \textbf{Contenido} & \textbf{Ubicación} \\
+\midrule
+1 & Software & Archivo de texto con el enlace al repositorio público del proyecto en GitHub, con el código fuente de la aplicación web, sus dependencias declaradas y las instrucciones de ejecución. Se entrega como enlace porque el aula virtual admite archivos de hasta 20~MB. & \codigo{01\_Software} \\
+2 & Informe técnico & Este documento: fuente \LaTeX, recursos y PDF compilado. & \codigo{02\_Informe\_Tecnico} \\
+3 & Manual de usuario & Acceso, interfaz, módulos y procedimientos con capturas de pantalla. & \codigo{03\_Manual\_Usuario} \\
+4 & Presentación & Diapositivas Beamer en formato 16:9 para la sustentación. & \codigo{04\_Presentacion\_Beamer} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Cronograma}
+
+La \cref{fig:gantt} muestra el cronograma por fases. Los hitos marcados con rombo coinciden con las fechas de las migraciones de base de datos registradas en el historial de migraciones del proyecto, que constituyen la evidencia objetiva del avance; las fases intermedias se planificaron por semanas.
+
+\begin{figure}[H]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{ganttchart}[
+    time slot format=isodate,
+    time slot unit=day,
+    x unit=0.075cm,
+    y unit chart=0.52cm,
+    y unit title=0.55cm,
+    title height=1,
+    vgrid={*6{draw=none},dotted,draw=sdline},
+    hgrid style/.style={draw=sdline,dotted},
+    title/.style={draw=sdline,fill=sdsoft},
+    title label font=\sffamily\scriptsize\bfseries,
+    bar/.append style={fill=sdteal,draw=none,rounded corners=1.5pt},
+    bar height=0.55,
+    bar label font=\sffamily\scriptsize,
+    group/.append style={fill=sdink,draw=none},
+    group label font=\sffamily\scriptsize\bfseries,
+    milestone/.append style={fill=sdblue,draw=none},
+    milestone label font=\sffamily\scriptsize\itshape,
+    link/.style={-{Latex[length=1.5mm]},draw=sdmuted}
+  ]{2026-06-01}{2026-10-31}
+  \gantttitlecalendar{month=name} \\
+  \ganttgroup{Inicio y planificación}{2026-06-01}{2026-06-13} \\
+  \ganttbar{Plan, backlog y riesgos}{2026-06-01}{2026-06-07} \\
+  \ganttbar{Análisis y diseño}{2026-06-03}{2026-06-20} \\
+  \ganttmilestone{Esquema inicial de la base de datos}{2026-06-14} \\
+  \ganttgroup{Construcción}{2026-06-14}{2026-10-10} \\
+  \ganttbar{Plataforma, roles y multiclínica}{2026-06-14}{2026-06-28} \\
+  \ganttmilestone{Arquitectura multiclínica}{2026-06-28} \\
+  \ganttbar{Módulos clínicos}{2026-06-22}{2026-08-15} \\
+  \ganttbar{Consola de plataforma}{2026-06-21}{2026-08-31} \\
+  \ganttbar{Inventario, caja y WhatsApp}{2026-06-28}{2026-09-20} \\
+  \ganttbar{Experiencia visual y odontograma v2}{2026-09-01}{2026-10-10} \\
+  \ganttgroup{Aseguramiento y cierre}{2026-07-01}{2026-10-28} \\
+  \ganttbar{Pruebas automatizadas}{2026-07-01}{2026-10-21} \\
+  \ganttbar{Auditoría y remediación de seguridad}{2026-09-15}{2026-10-22} \\
+  \ganttmilestone{Flujos clínicos aislados}{2026-10-22} \\
+  \ganttbar{Documentación y sustentación}{2026-10-15}{2026-10-28}
+\end{ganttchart}}
+\caption{Cronograma del proyecto (junio–octubre de 2026)}\label{fig:gantt}
+\end{figure}
+
+\subsection{Recursos utilizados}
+
+\begin{table}[H]
+\centering\small
+\caption{Recursos del proyecto}\label{tab:recursos}
+\begin{tabularx}{\linewidth}{@{}P{2.9cm}L@{}}
+\toprule
+\textbf{Tipo} & \textbf{Recurso y uso} \\
+\midrule
+Humano & Un desarrollador (autor) a cargo de la gestión, el análisis, el diseño, la programación, las pruebas y la documentación. Una clínica usuaria con cuenta real para la validación. \\
+Hardware & Computadora portátil con sistema operativo Linux para desarrollo, pruebas y renderizado 3D; navegador de escritorio y teléfono para pruebas adaptables. \\
+Software de desarrollo & Node.js y npm, Vite, editor de código, Git, Supabase CLI, Deno (funciones de servidor), Blender (recursos 3D de la landing y del inicio de sesión), \LaTeX{} (documentación). \\
+Servicios en la nube & Supabase: PostgreSQL, Auth, Edge Functions, Storage y Realtime. WhatsApp Business Platform (Cloud API) de Meta para la mensajería. \\
+Bibliotecas & React 18, React Router 6, Supabase JS 2, Three.js, Framer Motion, Lenis, Sileo y Tailwind CSS 4 (ver \cref{tab:tecnologias}). \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Responsables}
+
+Al tratarse de un trabajo individual, el autor asumió todos los roles del proyecto. La matriz RACI de la \cref{tab:raci} deja explícito quién es responsable (R), quién aprueba (A), a quién se consulta (C) y a quién se informa (I) en cada paquete de trabajo.
+
+\begin{table}[H]
+\centering\small
+\caption{Matriz de responsabilidades (RACI)}\label{tab:raci}
+\begin{tabularx}{\linewidth}{@{}L>{\centering\arraybackslash}p{2.8cm}>{\centering\arraybackslash}p{2.6cm}>{\centering\arraybackslash}p{2.4cm}@{}}
+\toprule
+\textbf{Paquete de trabajo} & \textbf{Autor} & \textbf{Clínica usuaria} & \textbf{Docente} \\
+\midrule
+Planificación y seguimiento & R / A & I & I \\
+Requisitos y prototipos & R / A & C & --- \\
+Arquitectura, base de datos y seguridad & R / A & --- & --- \\
+Módulos clínicos y de organización & R / A & C & --- \\
+Consola de plataforma & R / A & --- & --- \\
+Validación con datos reales & R / A & C & --- \\
+Documentación y sustentación & R / A & --- & I \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Riesgos identificados}
+
+Los riesgos se valoraron con una escala de probabilidad (P) e impacto (I) de 1 a 3; la exposición es el producto de ambos. La columna \emph{Estado} recoge lo que ocurrió realmente durante el proyecto.
+
+\begin{table}[H]
+\centering\small
+\caption{Registro de riesgos}\label{tab:riesgos}
+\begin{tabularx}{\linewidth}{@{}p{0.55cm}P{3.5cm}>{\centering\arraybackslash}p{0.35cm}>{\centering\arraybackslash}p{0.35cm}>{\centering\arraybackslash}p{0.5cm}LP{2.4cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Riesgo} & \textbf{P} & \textbf{I} & \textbf{E} & \textbf{Respuesta} & \textbf{Estado} \\
+\midrule
+R1 & Fuga de datos entre clínicas por políticas de acceso mal definidas. & 2 & 3 & \cellcolor{sdred!18}6 & Mitigar: políticas RLS por \codigo{clinic\_id}, operaciones sensibles en funciones de servidor, pruebas de seguridad. & Materializado y corregido (ver \cref{sec:defectos}). \\
+R2 & Cambios o fallos en servicios de terceros (IA, Meta). & 2 & 2 & \cellcolor{sdamber!20}4 & Mitigar: errores controlados, lista de modelos alternativos, funciones desacopladas. & Materializado y corregido. \\
+R3 & Crecimiento del alcance por nuevas ideas de módulos. & 3 & 2 & \cellcolor{sdred!18}6 & Evitar: backlog priorizado y lista explícita de exclusiones (\cref{tab:alcance}). & Controlado. \\
+R4 & Disponibilidad limitada de un único desarrollador. & 2 & 2 & \cellcolor{sdamber!20}4 & Aceptar: incrementos pequeños que siempre dejan una versión estable. & Controlado. \\
+R5 & Tratamiento inadecuado de datos clínicos sensibles. & 2 & 3 & \cellcolor{sdred!18}6 & Mitigar: datos de demostración para validar, credenciales solo en servidor, exportaciones con columnas permitidas. & Controlado. \\
+R6 & Integración de WhatsApp incompleta por configuración externa. & 2 & 2 & \cellcolor{sdamber!20}4 & Transferir/aceptar: documentar los secretos y pasos que dependen de Meta. & Abierto. \\
+R7 & Bajo rendimiento por efectos visuales y 3D. & 2 & 1 & \cellcolor{sdteal!15}2 & Mitigar: carga diferida de Three.js, imágenes prerenderizadas, efectos desactivados durante transiciones. & Corregido. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% =====================================================================
+\section{Análisis y diseño}
+% =====================================================================
+
+\subsection{Actores y roles}
+
+\begin{table}[H]
+\centering\small
+\caption{Roles del sistema}\label{tab:roles}
+\begin{tabularx}{\linewidth}{@{}P{3.6cm}L@{}}
+\toprule
+\textbf{Rol} & \textbf{Responsabilidad en el sistema} \\
+\midrule
+Administrador de plataforma (\codigo{platform\_admin}) & Registra y suspende clínicas, asigna planes, controla suscripciones y cobros, revisa auditoría, respaldos y ajustes globales. \\
+Administrador de clínica (\codigo{clinic\_admin}) & Dirige su consultorio: equipo, plan, preferencias, caja, WhatsApp y todos los módulos clínicos. \\
+Odontólogo (\codigo{assistant}, \codigo{odontologo}) & Atiende su propia agenda, sus pacientes asignados y el odontograma. \\
+Recepcionista (\codigo{assistant}, \codigo{recepcionista}) & Gestiona agenda, pacientes, inventario y conversaciones según los permisos otorgados. \\
+Paciente (externo) & Se comunica con la clínica por WhatsApp; no accede al panel. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Requisitos funcionales}
+
+\begin{table}[H]
+\centering\small
+\caption{Requisitos funcionales}\label{tab:rf}
+\begin{tabularx}{\linewidth}{@{}p{1.1cm}P{3.6cm}L@{}}
+\toprule
+\textbf{ID} & \textbf{Requisito} & \textbf{Descripción} \\
+\midrule
+RF-01 & Autenticación & Iniciar sesión con correo y contraseña, recuperar la contraseña por correo y cambiarla desde la cuenta. \\
+RF-02 & Gestión de clínicas & El administrador de plataforma registra una clínica junto con su administrador, edita sus datos, cambia su plan y la suspende o reactiva. \\
+RF-03 & Equipo y límites del plan & El administrador de clínica crea, edita y elimina miembros; el sistema respeta el límite de usuarios del plan (3 en Básico, 8 en Pro). \\
+RF-04 & Agenda & Crear citas por profesional, paciente, fecha, hora y duración; confirmar, cancelar y consultar disponibilidad en vista de día, semana o mes. \\
+RF-05 & Pacientes & Registrar y buscar pacientes por nombre o DNI; mantener contacto, tratamiento, alergias y notas en la ficha. \\
+RF-06 & Odontograma & Registrar hallazgos y tratamientos por pieza y cara en notación FDI, para dentición permanente, temporal o mixta, con historial e índices CPO-D / ceo-d. \\
+RF-07 & Inventario & Registrar insumos, ajustar existencias y alertar cuando la cantidad cae por debajo del stock mínimo. \\
+RF-08 & Caja & Registrar ingresos con concepto y paciente opcional, ver totales y exportar a CSV. \\
+RF-09 & WhatsApp & Configurar la línea de la clínica, ver conversaciones por paciente y responder en modo humano. \\
+RF-10 & Asistente Denti & Conversar en lenguaje natural con un modelo de lenguaje que consulta citas, disponibilidad, profesionales y pacientes autorizados, y prepara cancelaciones que solo se aplican tras confirmación. \\
+RF-11 & Suscripciones y cobros & Registrar pagos de suscripción, ver su estado y estimar el ingreso recurrente mensual. \\
+RF-12 & Auditoría y respaldos & Registrar operaciones administrativas y exportar los datos de una clínica en JSON o CSV. \\
+RF-13 & Cotización & Calcular desde el odontograma el precio aproximado del tratamiento según los hallazgos de cada pieza, ajustarlo, imprimirlo y guardarlo en la ficha. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Requisitos no funcionales}
+
+Los requisitos no funcionales se agrupan según las características de calidad de ISO/IEC 25010 \parencite{iso25010}.
+
+\begin{table}[H]
+\centering\small
+\caption{Requisitos no funcionales}\label{tab:rnf}
+\begin{tabularx}{\linewidth}{@{}p{1.3cm}P{3.1cm}L@{}}
+\toprule
+\textbf{ID} & \textbf{Característica} & \textbf{Criterio} \\
+\midrule
+RNF-01 & Seguridad & Cada consulta queda limitada a la clínica del usuario por políticas RLS; las claves de servicio y de terceros solo existen en el servidor. \\
+RNF-02 & Seguridad & Contraseñas gestionadas por Supabase Auth (con hash); contraseñas temporales generadas con 16 bytes aleatorios y nunca almacenadas en texto plano. \\
+RNF-03 & Usabilidad & Interfaz en español, adaptable a escritorio, tableta y teléfono, con tema claro y oscuro. \\
+RNF-04 & Accesibilidad & Navegación por teclado, etiquetas accesibles y respeto de la preferencia de movimiento reducido. \\
+RNF-05 & Fiabilidad & Las operaciones informan carga, éxito, vacío o error; los envíos repetidos se bloquean y los tiempos de espera tienen límite. \\
+RNF-06 & Rendimiento & El portal se carga de forma diferida y Three.js va en un paquete separado; las animaciones usan propiedades que no fuerzan el recálculo del diseño. \\
+RNF-07 & Mantenibilidad & Código organizado en páginas, componentes, hooks, bibliotecas y funciones; cambios de base de datos versionados como migraciones. \\
+RNF-08 & Portabilidad & Aplicación web sin instalación en el cliente; funciones de servidor sobre Deno. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Casos de uso}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  actor/.style={font=\sffamily\scriptsize\bfseries,align=center,text width=2.3cm},
+  uc/.style={ellipse,draw=sdline,line width=0.7pt,fill=sdsoft,font=\sffamily\scriptsize,minimum width=3.2cm,minimum height=0.68cm,inner sep=1pt},
+  asoc/.style={draw=sdmuted,line width=0.5pt}]
+  % Sistema
+  \draw[sdline,line width=0.8pt,rounded corners=4pt] (-3.9,-5.4) rectangle (3.9,3.2);
+  \node[font=\sffamily\small\bfseries,text=sdteal] at (0,2.85) {SmartDental};
+  % Casos
+  \node[uc] (u1) at (-1.9,2.1) {Gestionar clínicas y planes};
+  \node[uc] (u2) at (1.9,2.1) {Registrar cobros};
+  \node[uc] (u3) at (-1.9,1.05) {Revisar auditoría};
+  \node[uc] (u4) at (1.9,1.05) {Gestionar equipo};
+  \node[uc] (u5) at (-1.9,0) {Gestionar agenda};
+  \node[uc] (u6) at (1.9,0) {Registrar ingresos};
+  \node[uc] (u7) at (-1.9,-1.05) {Gestionar pacientes};
+  \node[uc] (u8) at (1.9,-1.05) {Controlar inventario};
+  \node[uc] (u9) at (-1.9,-2.1) {Registrar odontograma};
+  \node[uc] (u10) at (1.9,-2.1) {Atender por WhatsApp};
+  \node[uc] (u11) at (-1.9,-3.15) {Consultar a Denti};
+  \node[uc] (u12) at (1.9,-3.15) {Iniciar sesión};
+  \node[uc] (u13) at (0,-4.4) {Cambiar contraseña};
+  % Actores
+  \node[actor] (a1) at (-6,2) {\tikz\draw[sdink,line width=0.8pt](0,0.32)circle(0.13)(0,0.19)--(0,-0.12)(-0.18,0.08)--(0.18,0.08)(0,-0.12)--(-0.14,-0.34)(0,-0.12)--(0.14,-0.34);\\Administrador de plataforma};
+  \node[actor] (a2) at (6,0.5) {\tikz\draw[sdink,line width=0.8pt](0,0.32)circle(0.13)(0,0.19)--(0,-0.12)(-0.18,0.08)--(0.18,0.08)(0,-0.12)--(-0.14,-0.34)(0,-0.12)--(0.14,-0.34);\\Administrador de clínica};
+  \node[actor] (a3) at (-6,-1.6) {\tikz\draw[sdink,line width=0.8pt](0,0.32)circle(0.13)(0,0.19)--(0,-0.12)(-0.18,0.08)--(0.18,0.08)(0,-0.12)--(-0.14,-0.34)(0,-0.12)--(0.14,-0.34);\\Odontólogo};
+  \node[actor] (a4) at (6,-2.6) {\tikz\draw[sdink,line width=0.8pt](0,0.32)circle(0.13)(0,0.19)--(0,-0.12)(-0.18,0.08)--(0.18,0.08)(0,-0.12)--(-0.14,-0.34)(0,-0.12)--(0.14,-0.34);\\Recepcionista};
+  \foreach \u in {u1,u2,u3} \draw[asoc] (a1) -- (\u);
+  \foreach \u in {u4,u6,u10,u2} \draw[asoc] (a2) -- (\u);
+  \foreach \u in {u5,u7,u9,u11} \draw[asoc] (a3) -- (\u);
+  \foreach \u in {u8,u10,u12} \draw[asoc] (a4) -- (\u);
+\end{tikzpicture}
+\caption{Diagrama de casos de uso principal (simplificado)}\label{fig:casosuso}
+\end{figure}
+
+En la \cref{fig:casosuso} se omiten, por claridad, varias asociaciones: todos los actores internos inician sesión y cambian su contraseña, y el administrador de clínica puede ejecutar también los casos de uso del odontólogo y del recepcionista.
+
+\subsection{Arquitectura del sistema}
+
+SmartDental sigue una arquitectura de \textbf{aplicación de página única con servicios gestionados} (\cref{fig:arquitectura}). El navegador ejecuta la interfaz React; las lecturas y escrituras habituales van directamente a PostgreSQL a través de la API de datos de Supabase, donde las políticas de seguridad a nivel de fila deciden qué filas puede ver o modificar cada usuario \parencite{postgres2026,supabase2026}. Las operaciones que requieren privilegios —crear clínicas o usuarios, calcular indicadores globales, planificar acciones del asistente o recibir eventos de WhatsApp— se ejecutan en funciones de servidor (\emph{Edge Functions}) que validan la identidad del usuario antes de actuar.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=0.6cm and 0.9cm,scale=1.18,every node/.append style={transform shape}]
+  % Cliente
+  \node[cajaf,text width=3.3cm,minimum height=3.5cm] (spa) {\textbf{Navegador}\\[3pt]
+    \scriptsize React 18 + Vite\\React Router\\Panel de plataforma\\Panel de clínica\\Sitio público\\Three.js (diferido)};
+  % Supabase
+  \node[caja,right=1.3cm of spa,yshift=1.55cm,text width=2.6cm] (auth) {\textbf{Auth}\\\scriptsize sesiones y contraseñas};
+  \node[caja,below=0.32cm of auth,text width=2.6cm] (api) {\textbf{API de datos}\\\scriptsize PostgREST + RLS};
+  \node[caja,below=0.32cm of api,text width=2.6cm] (edge) {\textbf{Edge Functions}\\\scriptsize Deno};
+  \node[caja,below=0.32cm of edge,text width=2.6cm] (rt) {\textbf{Storage y Realtime}\\\scriptsize logos, avisos};
+  \node[cajaf,right=1.1cm of api,yshift=-0.55cm,text width=2.5cm,minimum height=2.1cm] (db) {\textbf{PostgreSQL}\\[2pt]\scriptsize 28 tablas\\políticas RLS\\función \texttt{clinical\_workflow}};
+  \begin{scope}[on background layer]
+    \node[draw=sdteal,dashed,line width=0.7pt,rounded corners=5pt,fit=(auth)(rt)(db),inner sep=9pt,label={[font=\sffamily\scriptsize\bfseries,text=sdteal]above:Supabase}] (sb) {};
+  \end{scope}
+  % Externos
+  % Flechas
+  \foreach \t in {auth,api,edge,rt} \draw[flecha] (spa.east) -- (\t.west);
+  \draw[flecha] (api.east) -- (db.west|-api.east);
+  \draw[flecha] (edge.east) -- (db.west|-edge.east);
+  \node[caja,anchor=north east,text width=2.5cm] (meta) at ([yshift=-0.55cm]sb.south east) {\textbf{Meta}\\\scriptsize WhatsApp Cloud API};
+  \draw[flecha,{Latex[length=2.2mm]}-{Latex[length=2.2mm]}] (meta.west) -| ([xshift=0.45cm]edge.south east) node[pos=0.22,above,font=\sffamily\scriptsize,text=sdmuted]{webhook};
+
+\end{tikzpicture}
+\caption{Arquitectura del sistema}\label{fig:arquitectura}
+\end{figure}
+
+\begin{table}[H]
+\centering\small
+\caption{Funciones de servidor}\label{tab:funciones}
+\begin{tabularx}{\linewidth}{@{}P{4.1cm}L@{}}
+\toprule
+\textbf{Función} & \textbf{Responsabilidad} \\
+\midrule
+\codigo{manage-clinics} & Alta, listado, ficha, edición, cambio de plan, suspensión y reactivación de clínicas. \\
+\codigo{manage-users} & Perfil del usuario actual y alta, edición y baja de miembros del equipo, con límites por plan. \\
+\codigo{clinic-kpis} & Indicadores globales de la plataforma e indicadores de una clínica. \\
+\codigo{appointment-workflow} & Operaciones de agenda validadas: listar, disponibilidad, crear y gestionar solicitudes. \\
+\codigo{nlp-assistant} & Asistente Denti: conversa mediante un modelo de lenguaje (Gemini) que usa herramientas de solo lectura con los permisos del usuario; si el proveedor no responde, usa un planificador por reglas. \\
+\codigo{whatsapp-webhook}, \codigo{whatsapp-settings}, \codigo{whatsapp-conversations} & Recepción de eventos de Meta con validación de firma HMAC, configuración de la línea y bandeja de conversaciones. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Diseño de la base de datos}
+
+La base de datos tiene 28 tablas en el esquema \codigo{public}. La \cref{fig:er} muestra el núcleo del modelo: todas las entidades operativas cuelgan de \codigo{clinics} mediante la columna \codigo{clinic\_id}, que es la clave del aislamiento multiclínica.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \entidad[at={(0,0)}]{cli}{clinics}{\pk{id} uuid\\nombre, slug\\plan (basico | pro)\\status, logo\_url};
+  \entidad[at={(-5.2,0)}]{pro}{profiles}{\pk{id} uuid (auth.users)\\\fk{clinic\_id}\\role, assistant\_role\\nombre\_completo, status};
+  \entidad[at={(5.2,0)}]{pac}{pacientes}{\pk{id} uuid\\\fk{clinic\_id}\\nombre, dni, telefono\\tratamiento, alergias};
+  \entidad[at={(-5.2,-3.6)}]{cit}{citas}{\pk{id} uuid\\\fk{clinic\_id}, \fk{paciente\_id}\\\fk{empleado\_id}\\fecha\_hora, duration\_minutes\\estado, motivo, notas};
+  \entidad[at={(0,-3.6)}]{rec}{patient\_clinical\_records}{\pk{id} uuid\\\fk{clinic\_id}, \fk{patient\_id}\\\fk{doctor\_id}\\content jsonb (odontograma)};
+  \entidad[at={(5.2,-3.6)}]{tra}{transacciones}{\pk{id} uuid\\\fk{clinic\_id}, \fk{paciente\_id}\\monto $\geq 0$, concepto};
+  \entidad[at={(-5.2,3.4)}]{sus}{suscripcion\_pagos}{\pk{id}\\\fk{clinic\_id}\\codigo, monto, estado};
+  \entidad[at={(0,3.4)}]{inv}{inventario}{\pk{id} uuid\\\fk{clinic\_id}\\producto, cantidad\\stock\_minimo};
+  \entidad[at={(5.2,3.4)}]{wac}{whatsapp\_conversations}{\pk{id} uuid\\\fk{clinic\_id}, \fk{patient\_id}\\patient\_phone, mode};
+  \draw[rel] (pro) -- (cli);
+  \draw[rel] (pac) -- (cli);
+  \draw[rel] (inv) -- (cli);
+  \draw[rel] (sus) -- (cli);
+  \draw[rel] (wac) -- (cli);
+  \draw[rel] (cit) -- (pro);
+  \draw[rel] (cit.south) -- ++(0,-0.45) -| ([xshift=-0.6cm]tra.south west) |- ([yshift=-0.2cm]pac.south west);
+  \draw[rel] (rec) -- (pac);
+  \draw[rel] (rec) -- (pro);
+  \draw[rel] (tra) -- (pac);
+  \draw[rel] (wac) -- (pac);
+\end{tikzpicture}
+\caption{Modelo de datos principal (las flechas apuntan a la entidad referenciada)}\label{fig:er}
+\end{figure}
+
+Otras tablas complementan el modelo: \codigo{paciente\_empleado} (asignación de pacientes a profesionales), \codigo{staff\_permissions} (permisos finos por miembro), \codigo{doctor\_schedules} y \codigo{doctor\_schedule\_blocks} (horarios y bloqueos), \codigo{appointment\_requests} y \codigo{appointment\_audit} (solicitudes y trazabilidad de la agenda), \codigo{whatsapp\_messages}, \codigo{whatsapp\_credentials} y \codigo{whatsapp\_outbox} (mensajería), \codigo{audit\_logs}, \codigo{support\_tickets}, \codigo{system\_settings} y \codigo{notifications}.
+
+\subsubsection*{Ciclo de vida de una cita}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  est/.style={caja,rounded corners=9pt,minimum width=2.6cm,font=\sffamily\small},
+  node distance=2.4cm]
+  \node[circle,fill=sdink,inner sep=3pt] (ini) {};
+  \node[est,right=1.1cm of ini] (p) {Pendiente\\\scriptsize\codigo{pending}};
+  \node[est,right=of p,draw=sdteal] (c) {Confirmada\\\scriptsize\codigo{confirmed}};
+  \node[est,below=1.1cm of $(p)!0.5!(c)$,draw=sdred] (x) {Cancelada\\\scriptsize\codigo{cancelled}};
+  \draw[flecha] (ini) -- node[above,font=\sffamily\scriptsize]{crear} (p);
+  \draw[flecha] (p) -- node[above,font=\sffamily\scriptsize]{confirmar} (c);
+  \draw[flecha] (p) |- node[pos=0.25,left,font=\sffamily\scriptsize]{cancelar} (x);
+  \draw[flecha] (c) |- node[pos=0.25,right,font=\sffamily\scriptsize]{cancelar} (x);
+\end{tikzpicture}
+\caption{Estados de una cita}\label{fig:estados}
+\end{figure}
+
+\subsubsection*{Modelo del odontograma}
+
+El odontograma se guarda como un documento JSON dentro de la ficha clínica del paciente. Cada pieza se identifica con su número FDI \parencite{iso3950} y registra sus hallazgos por cara (vestibular, lingual o palatina, mesial, distal y oclusal o incisal), una nota y su estado. El documento conserva además un historial de cambios con fecha y autor. A partir de él, el sistema calcula los índices \textbf{CPO-D} (piezas permanentes cariadas, perdidas y obturadas) y \textbf{ceo-d} (su equivalente en dentición temporal). Siguiendo la convención usada en los odontogramas clínicos peruanos, los hallazgos se dibujan en \textcolor{sdred}{\textbf{rojo}} y los tratamientos realizados en \textcolor{sdblue}{\textbf{azul}}.
+
+% =====================================================================
+\section{Desarrollo e implementación}
+% =====================================================================
+
+\subsection{Tecnologías empleadas}
+
+\begin{table}[H]
+\centering\small
+\caption{Tecnologías empleadas}\label{tab:tecnologias}
+\begin{tabularx}{\linewidth}{@{}P{3cm}P{3.6cm}L@{}}
+\toprule
+\textbf{Capa} & \textbf{Tecnología} & \textbf{Uso en el proyecto} \\
+\midrule
+Interfaz & React 18, React Router 6 & Componentes, rutas protegidas por rol y carga diferida del portal \parencite{react2026}. \\
+Construcción & Vite 5, Tailwind CSS 4 & Servidor de desarrollo, compilación optimizada y utilidades de estilo; el diseño principal usa CSS propio con variables de tema. \\
+Datos y autenticación & Supabase JS 2 & Sesión, consultas a PostgreSQL, Storage y Realtime. \\
+Servidor & Deno (Edge Functions) & Operaciones privilegiadas, asistente y webhook de WhatsApp. \\
+Base de datos & PostgreSQL & Tablas, restricciones, funciones SQL y políticas RLS. \\
+Gráficos 3D & Three.js, Blender & Pieza dental 3D del sitio público e imágenes prerenderizadas. \\
+Movimiento & Framer Motion, Lenis, View Transitions API & Animaciones de interfaz, desplazamiento suave y transición de tema. \\
+Notificaciones & Sileo & Avisos emergentes de éxito y error. \\
+Mensajería & WhatsApp Cloud API & Recepción y envío de mensajes de pacientes \parencite{meta2026}. \\
+Pruebas & Node test runner, react-test-renderer & Pruebas unitarias y de integración con dependencias sustituidas. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Organización del código}
+
+El proyecto reúne unas 21\,700 líneas de código propio (JavaScript, JSX, TypeScript y CSS) en 63 componentes React, 8 funciones de servidor activas y 22 migraciones SQL.
+
+\begin{table}[H]
+\centering\small
+\caption{Estructura del proyecto}\label{tab:estructura}
+\begin{tabularx}{\linewidth}{@{}P{4.4cm}L@{}}
+\toprule
+\textbf{Ruta} & \textbf{Contenido} \\
+\midrule
+\codigo{src/pages/} & Páginas: sitio público, inicio de sesión, consola de plataforma y módulos de la clínica. \\
+\codigo{src/features/} & Secciones de la consola (clínicas, suscripciones, cobros, planes, operaciones) y WhatsApp. \\
+\codigo{src/components/} & Diseño compartido, odontograma, asistente, iconos propios, carga y diálogos. \\
+\codigo{src/providers/}, \codigo{src/hooks/} & Sesión y tema; consultas con cancelación y acciones asíncronas protegidas. \\
+\codigo{src/lib/} & Cliente de Supabase, modelo del odontograma, exportaciones y utilidades. \\
+\codigo{supabase/functions/} & Funciones de servidor en Deno y módulos compartidos de seguridad y flujos. \\
+\codigo{supabase/migrations/} & Historia versionada del esquema y de las políticas de seguridad. \\
+\codigo{tests/} & Pruebas automatizadas y simulaciones de Supabase. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Módulos desarrollados}
+
+\paragraph{Sitio público} Presenta el producto con una pieza dental 3D, los módulos, el asistente, los planes y el contacto por WhatsApp (\cref{fig:capturas/02_landing_hero}).
+
+\captura[0.9\linewidth]{capturas/02_landing_hero}{Sitio público de SmartDental}
+
+\paragraph{Acceso} Inicio de sesión con correo y contraseña, opción de mostrar la contraseña, recordatorio del correo, recuperación por enlace y redirección automática según el rol (\cref{fig:capturas/01_login}).
+
+\captura[0.9\linewidth]{capturas/01_login}{Pantalla de inicio de sesión}
+
+\paragraph{Panel de la clínica} Agrupa sus secciones en \emph{Tu consultorio} (Resumen, Mi espacio, Agenda, Pacientes, Odontograma), \emph{Organización} (Inventario, Caja e ingresos, WhatsApp), \emph{Administración} (Equipo y plan, Preferencias) y \emph{Tu cuenta}. Las secciones visibles dependen del rol: por ejemplo, la recepcionista no ve el odontograma y el odontólogo no ve el inventario. Una paleta de búsqueda (\boton{Ctrl}\,+\,\boton{K}) permite saltar a cualquier sección o abrir la ficha de un paciente.
+
+\captura{capturas/c01_resumen}{Resumen del panel de la clínica}
+
+\paragraph{Agenda} Calendario por día, semana o mes con filtro por profesional, indicadores del periodo y reserva guiada. La creación de citas pasa por la función \codigo{appointment-workflow}, que valida fechas, duración (de 5 a 240 minutos) y permisos antes de escribir en la base de datos.
+
+
+\captura{capturas/c02_agenda}{Agenda semanal con filtro por profesional}
+
+\paragraph{Pacientes} Directorio con búsqueda por nombre o DNI, alta de pacientes y ficha con datos de contacto, tratamiento, alergias, próximas citas y acceso directo al odontograma.
+
+\captura{capturas/c04_pacientes}{Directorio de pacientes}
+
+\paragraph{Odontograma} Es el módulo clínico central. Muestra las arcadas superior e inferior en notación FDI, permite elegir entre dentición permanente, temporal o mixta, y registrar con una herramienta seleccionada hallazgos (caries, fractura, extracción indicada o pieza ausente) y tratamientos (restauración, sellante, corona, endodoncia o implante) por pieza o por cara. La vista 3D de la arcada colorea cada pieza con la misma convención (rojo hallazgo, azul tratamiento, translúcida si está ausente) y muestra su número. Cada cambio queda en el historial y los índices CPO-D y ceo-d se recalculan al instante (\cref{lst:cpod}).
+
+\begin{lstlisting}[language=Java,caption={Cálculo de los índices CPO-D y ceo-d (extracto de \texttt{src/lib/odontogram.js})},label=lst:cpod]
+export function dmft(model, dentition = model.dentition) {
+  const temporary = dentition === 'temporary';
+  let decayed = 0, missing = 0, filled = 0;
+  Object.entries(model.teeth).forEach(([fdi, t]) => {
+    if (isTemporary(Number(fdi)) !== temporary) return;
+    const surfaces = Object.values(t.surfaces || {});
+    if (t.whole && ['missing', 'extraction'].includes(t.whole.c)) { missing += 1; return; }
+    if (surfaces.some((m) => m.c === 'caries') || t.whole?.c === 'fracture') { decayed += 1; return; }
+    if (surfaces.some((m) => m.c === 'restoration') || t.whole?.c === 'crown') filled += 1;
+  });
+  return { decayed, missing, filled, total: decayed + missing + filled,
+           label: temporary ? 'ceo-d' : 'CPO-D' };
+}
+\end{lstlisting}
+
+
+\captura{capturas/c06_odontograma}{Odontograma con hallazgos en rojo y tratamientos en azul}
+
+\paragraph{Cotización del tratamiento} Desde el mismo odontograma se obtiene el precio aproximado del tratamiento. Solo las marcas en rojo generan procedimientos, porque son lo que falta hacer; las azules son tratamientos ya realizados y no se cobran. La \cref{tab:cotizacion} resume cómo se traduce cada hallazgo. El profesional puede excluir líneas, añadir la consulta o la profilaxis, ofrecer implantes para las piezas ausentes, ajustar precios y aplicar un descuento. La cotización se imprime como documento para el paciente y se guarda como copia dentro del odontograma (las diez últimas), de modo que queda en la ficha junto con el estado de las piezas en ese momento. Los precios salen del tarifario de la clínica, que su administrador edita en Preferencias o desde la propia cotización: está agrupado por especialidad, permite subir o bajar todos los precios en un porcentaje, volver al precio referencial de cada procedimiento y añadir procedimientos propios (blanqueamiento, ortodoncia…) que luego se suman a cualquier cotización con un toque.
+
+\begin{table}[H]
+\centering\small
+\caption{Correspondencia entre hallazgos y procedimientos cotizados}\label{tab:cotizacion}
+\begin{tabularx}{\linewidth}{@{}P{4.6cm}LP{2.2cm}@{}}
+\toprule
+\textbf{Hallazgo en rojo} & \textbf{Procedimiento sugerido} & \textbf{Precio ref.} \\
+\midrule
+Caries en una o varias caras & Restauración con resina y cara adicional por cada cara extra & S/~80 + S/~30 \\
+Restauración o sellante defectuoso & Cambio de restauración o nuevo sellante & S/~90 / S/~40 \\
+Fractura & Reconstrucción coronaria & S/~150 \\
+Corona en mal estado & Corona metal-porcelana & S/~650 \\
+Endodoncia indicada & Endodoncia anterior, premolar o molar según la pieza & S/~350--600 \\
+Extracción indicada & Extracción simple o de tercer molar & S/~80 / S/~250 \\
+Pieza ausente (opcional) & Implante dental & S/~3\,500 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\captura{capturas/c16_cotizacion}{Cotización calculada a partir del odontograma}
+
+\paragraph{Inventario y caja} El inventario muestra cada insumo con su nivel de stock y un semáforo (crítico, bajo o suficiente) respecto del mínimo definido. La caja registra ingresos, muestra totales del día y del mes y exporta a CSV, neutralizando las fórmulas para evitar inyecciones al abrir el archivo en una hoja de cálculo.
+
+\captura{capturas/c07_inventario}{Inventario con alertas de stock}
+
+\paragraph{WhatsApp} Permite configurar la línea de la clínica y atender las conversaciones de los pacientes, cada una asociada a un profesional y en modo bot o humano. El webhook verifica la firma HMAC de Meta antes de procesar cualquier evento.
+
+\paragraph{Asistente Denti} Asistente personal del panel basado en un modelo de lenguaje (Gemini). Entiende preguntas libres como «¿qué citas tengo mañana?», «¿cuántas siguen pendientes esta semana?» o «busca horarios libres el viernes», recuerda el contexto de la conversación y responde en español natural. El modelo no accede a la base de datos: dispone de cuatro herramientas (listar citas, buscar horarios libres, contar pacientes y preparar una cancelación) que el servidor ejecuta con el token del propio usuario, de modo que las políticas RLS deciden qué puede ver. El servidor reconoce al odontólogo por su nombre («la Dra. Paredes»), consulta a todo el equipo cuando no se nombra a nadie y, si quien pregunta es odontólogo, limita cualquier consulta a su propia agenda; el modelo responde directamente, con fechas en lenguaje natural, y nunca pide ni muestra identificadores internos. Ninguna herramienta modifica la agenda: una cancelación solo se prepara y el usuario la confirma en pantalla. Al proveedor se envía lo mínimo (nombre del paciente, hora, estado y motivo de la cita), nunca el DNI ni el teléfono. Si el proveedor no responde, contesta el planificador por reglas de la versión anterior.
+
+\begin{table}[H]
+\centering\small
+\caption{Herramientas que el modelo de lenguaje puede invocar (\textit{function calling})}\label{tab:denti-tools}
+\begin{tabularx}{\linewidth}{@{}P{3.6cm}P{3.6cm}L@{}}
+\toprule
+\textbf{Herramienta} & \textbf{Parámetros} & \textbf{Garantía aplicada en el servidor} \\
+\midrule
+\codigo{listar\_citas} & \codigo{desde}, \codigo{hasta}, \codigo{profesional}? & Días locales de Lima convertidos a UTC; sin DNI ni teléfono en la respuesta. \\
+\codigo{buscar\_horarios\_libres} & \codigo{desde}, \codigo{hasta}, \codigo{profesional}? & Sin nombre consulta a todo el equipo; un odontólogo siempre recibe solo su agenda. \\
+\codigo{contar\_pacientes} & — & Conteo bajo las políticas RLS del usuario. \\
+\codigo{preparar\_cancelacion} & \codigo{desde}, \codigo{hasta}, \codigo{profesional}? & Devuelve una vista previa con \codigo{confirmation\_required}; nunca cancela. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+El ciclo es iterativo: el modelo (\codigo{gemini-2.5-flash}, con \codigo{gemini-2.0-flash} como respaldo) decide qué herramienta usar, el servidor la ejecuta, valida los argumentos (una fecha inexistente como el 30 de febrero se devuelve como error al modelo en lugar de interrumpir la conversación) y le entrega el resultado reducido; el modelo redacta entonces la respuesta final. Diez pruebas automatizadas simulan el proveedor y verifican estas garantías, incluida la ausencia de datos sensibles en cada petición.
+
+\paragraph{Consola del administrador de plataforma} Incluye un tablero con el ingreso recurrente estimado y la evolución de clínicas, el directorio de clínicas con su ficha (resumen, equipo, suscripción, respaldos y auditoría), suscripciones, facturas y pagos, planes comerciales, operaciones y auditoría, configuración global y cambio de contraseña.
+
+\captura{capturas/a01_resumen}{Tablero del administrador de plataforma}
+
+\subsection{Seguridad aplicada}
+
+\begin{itemize}
+  \item \textbf{Aislamiento por clínica}: políticas RLS que comparan el \codigo{clinic\_id} de cada fila con la clínica del perfil autenticado, obtenida en el servidor y no desde datos editables por el usuario.
+  \item \textbf{Privilegios en el servidor}: la clave de servicio de Supabase y los secretos de Meta solo existen como variables de entorno de las funciones; el navegador usa la clave pública.
+  \item \textbf{Validación de entradas}: las funciones copian únicamente los campos permitidos y rechazan identificadores, fechas o tamaños no válidos.
+  \item \textbf{Exportaciones seguras}: columnas permitidas de forma explícita, paginación con conteo exacto y neutralización de fórmulas en CSV \parencite{owasp2021}.
+\end{itemize}
+
+% =====================================================================
+\section{Pruebas y resultados}
+% =====================================================================
+
+\subsection{Procedimientos de validación}
+
+Se aplicaron cuatro niveles de verificación \parencite{pressman2020}:
+
+\begin{enumerate}
+  \item \textbf{Pruebas automatizadas} (\codigo{npm test}): validan los hooks de consulta y acciones, la autenticación, los flujos de agenda, la exportación de datos, la mensajería de WhatsApp y el backend administrativo, con Supabase sustituido por simulaciones.
+  \item \textbf{Pruebas de seguridad} (\codigo{security.test.mjs}): validan la firma del webhook y las comprobaciones administrativas.
+  \item \textbf{Compilación de producción} (\codigo{npm run build}): confirma que todo el frontend compila sin errores.
+  \item \textbf{Validación funcional en un entorno real}: los flujos principales se ejecutaron con una cuenta de clínica real sobre datos de demostración, y los registros de prueba se eliminaron al terminar.
+\end{enumerate}
+
+\subsection{Resultados obtenidos}
+
+\begin{table}[H]
+\centering\small
+\caption{Resultados de las pruebas automatizadas (ejecución del 5 de noviembre de 2026)}\label{tab:pruebas}
+\begin{tabularx}{\linewidth}{@{}L>{\centering\arraybackslash}p{1.6cm}>{\centering\arraybackslash}p{1.6cm}>{\centering\arraybackslash}p{1.6cm}@{}}
+\toprule
+\textbf{Conjunto} & \textbf{Pruebas} & \textbf{Correctas} & \textbf{Fallidas} \\
+\midrule
+Consultas, autenticación, agenda, exportación, WhatsApp y administración & 86 & 86 & 0 \\
+Seguridad de funciones (\codigo{security.test.mjs}) & 3 & 3 & 0 \\
+Odontograma, cotización y tarifario (\codigo{odontogram.test.mjs}) & 15 & 15 & 0 \\
+Asistente con modelo de lenguaje (\codigo{assistant-llm.test.mjs}) & 10 & 10 & 0 \\
+\midrule
+\textbf{Total (\codigo{npm test})} & \textbf{114} & \textbf{114} & \textbf{0} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[H]
+\centering\small
+\caption{Validación funcional sobre la cuenta real de una clínica}\label{tab:validacion}
+\begin{tabularx}{\linewidth}{@{}P{3.4cm}LP{1.9cm}@{}}
+\toprule
+\textbf{Flujo} & \textbf{Procedimiento y resultado esperado} & \textbf{Resultado} \\
+\midrule
+Inicio de sesión por rol & Ingresar con la cuenta de clínica y con la de plataforma; cada una llega a su panel. & \textcolor{sdteal}{\textbf{Conforme}} \\
+Reserva de cita & Crear una cita, verla en la agenda y cambiar su estado a confirmada. & \textcolor{sdteal}{\textbf{Conforme}} \\
+Odontograma & Registrar hallazgos y tratamientos, guardar y volver a abrir la ficha con el mismo estado. & \textcolor{sdteal}{\textbf{Conforme}} \\
+Inventario & Crear un insumo por debajo del mínimo y ver la alerta. & \textcolor{sdteal}{\textbf{Conforme}} \\
+Caja & Registrar un ingreso y verlo en los totales. & \textcolor{sdteal}{\textbf{Conforme}} \\
+Configuración de WhatsApp & Guardar la configuración de la línea de la clínica. & \textcolor{sdteal}{\textbf{Conforme}} \\
+Consulta a Denti & Preguntar por las citas del día y recibir la respuesta con hora local de Lima. & \textcolor{sdteal}{\textbf{Conforme}} \\
+Recepción de WhatsApp & Recibir mensajes reales de Meta en el webhook desplegado. & \textcolor{sdamber}{\textbf{Pendiente}}\textsuperscript{a} \\
+\bottomrule
+\end{tabularx}
+\par\smallskip\raggedright\footnotesize\textsuperscript{a}\,Requiere configurar en el servidor los secretos \codigo{WHATSAPP\_VERIFY\_TOKEN} y \codigo{META\_APP\_SECRET} y desplegar el webhook sin verificación de JWT (Meta no envía sesión de usuario).
+\end{table}
+
+\subsection{Defectos encontrados y corregidos}\label{sec:defectos}
+
+\begin{table}[H]
+\centering\small
+\caption{Defectos relevantes detectados durante el proyecto}\label{tab:defectos}
+\begin{tabularx}{\linewidth}{@{}P{3.5cm}LP{1.9cm}@{}}
+\toprule
+\textbf{Defecto} & \textbf{Causa y corrección} & \textbf{Estado} \\
+\midrule
+Políticas de acceso basadas en metadatos editables & Una revisión encontró políticas que autorizaban con \codigo{user\_metadata}, editable por el propio usuario. Se reescribieron para obtener rol y clínica desde el servidor. & Corregido \\
+Error 400 del proveedor de IA & El modelo configurado dejó de aceptar el formato de la petición. El asistente prueba ahora una lista de modelos en orden y, si ninguno responde, contesta con el planificador por reglas. & Corregido \\
+Horas de citas en UTC & El asistente devolvía horas en tiempo universal. Ahora se convierten a la zona America/Lima. & Corregido \\
+Transición de tema inconsistente & Un elemento sobrante repetía un nombre de transición y el navegador omitía la animación. Se elimina al finalizar. & Corregido \\
+Transición de tema con saltos & Los fondos desenfocados se recalculaban en cada fotograma. Se congelan mientras dura la transición. & Corregido \\
+Deshacer duplicaba pasos en el odontograma & El historial de cambios se actualizaba dentro de una función que React puede ejecutar dos veces. Ahora cada cambio se registra una sola vez. & Corregido \\
+Dentición mixta inexistente & El odontograma solo mostraba dentición permanente o temporal. Se añadió la vista mixta, con los índices CPO-D y ceo-d por separado. & Corregido \\
+Impresión con el panel completo & Al imprimir salían la barra lateral y el fondo. Ahora se imprime solo el odontograma o la cotización. & Corregido \\
+Asistente con respuestas genéricas & El planificador por reglas solo reconocía frases fijas. Se incorporó un modelo de lenguaje con herramientas de solo lectura. & Corregido \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Evidencias del funcionamiento}
+
+Las figuras de la \cref{sec:modulos-evidencia} y el manual de usuario contienen capturas tomadas de la aplicación en ejecución. Los nombres de pacientes que aparecen pertenecen a un lote de datos de demostración; no se publica información de pacientes reales.
+
+\subsubsection*{Capturas adicionales}\label{sec:modulos-evidencia}
+
+\captura{capturas/c08_caja}{Caja e ingresos}
+\captura{capturas/c09_whatsapp}{Conversaciones de WhatsApp}
+\captura{capturas/a02_clinicas}{Directorio de clínicas de la plataforma}
+
+% =====================================================================
+\section{Conclusiones}
+% =====================================================================
+
+\subsection{Cumplimiento de los objetivos}
+
+\begin{table}[H]
+\centering\small
+\caption{Cumplimiento de los objetivos específicos}\label{tab:cumplimiento}
+\begin{tabularx}{\linewidth}{@{}p{1.1cm}LP{2.2cm}@{}}
+\toprule
+\textbf{Obj.} & \textbf{Evidencia} & \textbf{Cumplimiento} \\
+\midrule
+OE1 & Cuatro roles operativos, rutas por rol y políticas RLS por \codigo{clinic\_id}. & Cumplido \\
+OE2 & Agenda, pacientes y odontograma con historial e índices CPO-D / ceo-d, validados con datos reales. & Cumplido \\
+OE3 & Inventario con alertas y caja con exportación operativos; WhatsApp configurable y bandeja implementada. & Parcial\textsuperscript{a} \\
+OE4 & Consola con clínicas, planes, suscripciones, cobros, auditoría, respaldos y ajustes. & Cumplido \\
+OE5 & 114 de 114 pruebas automatizadas correctas y siete flujos validados en un entorno real. & Cumplido \\
+\bottomrule
+\end{tabularx}
+\par\smallskip\raggedright\footnotesize\textsuperscript{a}\,La recepción real de mensajes depende de la configuración de secretos en Meta y Supabase (riesgo R6).
+\end{table}
+
+\subsection{Dificultades encontradas}
+
+\begin{itemize}
+  \item \textbf{Seguridad multiclínica}: diseñar políticas RLS que no dependan de datos editables por el usuario exigió varias iteraciones y una auditoría específica. Fue la mayor fuente de retrabajo del proyecto.
+  \item \textbf{Dependencia de terceros}: los cambios del proveedor de IA y los requisitos de Meta obligaron a modificar el código ya terminado y a documentar pasos de configuración externos.
+  \item \textbf{Gestión individual}: concentrar todos los roles en una persona hace más difícil revisar el propio trabajo; las pruebas automatizadas y la definición de terminado compensaron en parte esa falta de revisión cruzada.
+  \item \textbf{Rendimiento visual}: los efectos de vidrio y las animaciones 3D requirieron optimizaciones específicas para mantener la fluidez.
+\end{itemize}
+
+\subsection{Oportunidades de mejora}
+
+\begin{itemize}
+  \item Completar la integración de WhatsApp en producción y añadir recordatorios automáticos de citas.
+  \item Incorporar un kárdex de inventario con historial de entradas y salidas.
+  \item Emitir comprobantes internos en PDF desde la caja.
+  \item Restaurar respaldos de forma transaccional, además de exportarlos.
+  \item Añadir pruebas de extremo a extremo automatizadas sobre una base de datos aislada y una matriz de permisos con dos clínicas.
+  \item Habilitar una galería de radiografías y fotografías clínicas por paciente.
+\end{itemize}
+
+\clearpage
+\printbibliography[heading=bibintoc,title={Referencias}]
+
+% =====================================================================
+\clearpage
+\appendix
+\section{Anexo: instalación y ejecución}\label{anx:instalacion}
+
+\begin{sdpaso}{Requisitos}
+Node.js 20 o superior (incluye npm) y Git. No se necesita configuración adicional: la aplicación ya está conectada a su servicio en la nube.
+\end{sdpaso}
+
+\begin{lstlisting}[language=bash,caption={Instalación y ejecución local},label=lst:instalacion]
+# 1. Obtener el código fuente
+git clone https://github.com/garou7ro/SmartDental.git
+cd SmartDental
+# 2. Instalar las dependencias
+npm install
+# 3. Iniciar la aplicación (abre http://localhost:3000)
+npm run dev
+# Opcional: compilación de producción en dist/
+npm run build
+\end{lstlisting}
+
+\begin{sdaviso}[Puerto de la aplicación]
+La aplicación debe ejecutarse en el puerto 3000 o 3001. Si el 3000 está ocupado por otro programa, ciérralo o ejecuta \codigo{npm run dev -- --port 3001}. Las credenciales de prueba se indican en \codigo{01\_Software/repositorio\_github.txt}.
+\end{sdaviso}
+
+\end{document}

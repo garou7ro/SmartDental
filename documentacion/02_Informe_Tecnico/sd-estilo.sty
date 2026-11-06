@@ -1,0 +1,198 @@
+% =====================================================================
+%  sd-estilo.sty — Estilo común del informe técnico y del manual de usuario
+%  Proyecto: SmartDental · Asignatura: Gestión de Proyectos
+% =====================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{sd-estilo}[2026/10/21 Estilo documental SmartDental]
+
+% ---------- Idioma y tipografía ----------
+\RequirePackage[T1]{fontenc}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[spanish,es-noshorthands,es-tabla]{babel}
+\RequirePackage[default,semibold]{sourceserifpro}
+\RequirePackage[scale=0.92]{sourcesanspro}
+\RequirePackage[scale=0.86]{sourcecodepro}
+\RequirePackage{microtype}
+
+% ---------- Página ----------
+\RequirePackage[a4paper,top=2.6cm,bottom=2.6cm,left=2.7cm,right=2.5cm,headheight=15pt]{geometry}
+\RequirePackage{setspace}
+\setstretch{1.18}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.62em}
+
+% ---------- Color ----------
+\RequirePackage[table,dvipsnames]{xcolor}
+\definecolor{sdink}{HTML}{14202E}
+\definecolor{sdmuted}{HTML}{5B6676}
+\definecolor{sdline}{HTML}{D9DFE7}
+\definecolor{sdsoft}{HTML}{F3F6F9}
+\definecolor{sdteal}{HTML}{0E8C80}
+\definecolor{sdblue}{HTML}{1F5FBF}
+\definecolor{sdred}{HTML}{C0392B}
+\definecolor{sdamber}{HTML}{B7791F}
+\color{sdink}
+
+% ---------- Utilidades ----------
+\RequirePackage{graphicx}
+\RequirePackage{booktabs,tabularx,longtable,array,multirow}
+\RequirePackage{enumitem}
+\RequirePackage{amsmath,amssymb}
+\RequirePackage{float}
+\RequirePackage{calc}
+\RequirePackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,shapes.multipart,fit,calc,backgrounds,shadows.blur}
+\RequirePackage{pgfgantt}
+\RequirePackage[most]{tcolorbox}
+\RequirePackage{listings}
+\RequirePackage{csquotes}
+\RequirePackage{fancyhdr}
+\RequirePackage{titlesec,titletoc}
+\RequirePackage[font={small,sf},labelfont={bf,color=sdteal},labelsep=period,justification=raggedright,singlelinecheck=false,skip=6pt]{caption}
+
+\setlist{itemsep=0.22em,topsep=0.3em,leftmargin=1.4em}
+\setlist[itemize]{label={\color{sdteal}\small$\blacktriangleright$}}
+\renewcommand{\arraystretch}{1.28}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+% ---------- Títulos ----------
+\titleformat{\section}
+  {\sffamily\bfseries\LARGE\color{sdink}}
+  {\color{sdteal}\thesection}{0.7em}{}[\vspace{2pt}{\color{sdline}\titlerule[0.8pt]}]
+\titleformat{\subsection}
+  {\sffamily\bfseries\Large\color{sdink}}{\color{sdteal}\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}
+  {\sffamily\bfseries\large\color{sdink}}{\thesubsubsection}{0.5em}{}
+\titleformat{\paragraph}[runin]
+  {\sffamily\bfseries\color{sdink}}{}{0pt}{}[.]
+\titlespacing*{\section}{0pt}{1.4em}{0.9em}
+\titlespacing*{\subsection}{0pt}{1.2em}{0.45em}
+\titlespacing*{\subsubsection}{0pt}{1em}{0.3em}
+
+% ---------- Página sin encabezados ni pies: solo el número ----------
+\fancypagestyle{sdpagina}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}\renewcommand{\footrulewidth}{0pt}%
+  \fancyfoot[C]{\sffamily\footnotesize\color{sdmuted}\thepage}}
+\pagestyle{sdpagina}
+\fancypagestyle{plain}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}\fancyfoot[C]{\sffamily\footnotesize\color{sdmuted}\thepage}}
+
+% ---------- Índices ----------
+\titlecontents{section}[0em]{\vspace{0.55em}\sffamily\bfseries}
+  {\contentslabel[\color{sdteal}\thecontentslabel]{1.8em}}{}{\hfill\contentspage}
+\titlecontents{subsection}[1.8em]{\sffamily\small}
+  {\contentslabel[\thecontentslabel]{2.4em}}{}{\titlerule*[0.6pc]{.}\contentspage}
+\titlecontents{figure}[0em]{\sffamily\small}
+  {\contentslabel[\color{sdteal}\thecontentslabel]{2.2em}}{}{\titlerule*[0.6pc]{.}\contentspage}
+\titlecontents{table}[0em]{\sffamily\small}
+  {\contentslabel[\color{sdteal}\thecontentslabel]{2.2em}}{}{\titlerule*[0.6pc]{.}\contentspage}
+
+% ---------- Datos del documento ----------
+\newcommand{\sdautor}{Ronal Abelin Larico Ccaso}
+\newcommand{\sdcurso}{Gestión de Proyectos}
+\newcommand{\sdactividad}{Documentación y sustentación de software}
+\newcommand{\sdfecha}{21 de octubre de 2026}
+% Nombre de la universidad y de la escuela en texto plano (sin logotipos ni escudos,
+% según la restricción de identidad institucional). Para una portada totalmente
+% neutral basta con dejar ambos comandos vacíos.
+\newcommand{\sduniversidad}{Universidad Nacional de Juliaca}
+\newcommand{\sdescuela}{Escuela Profesional de Ingeniería de Software y Sistemas}
+
+% ---------- Portada ----------
+% \sdportada{Tipo de documento}{Título}{Subtítulo}
+\newcommand{\sdportada}[3]{%
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{tikzpicture}[remember picture,overlay]
+  % Banda lateral
+  \fill[sdink] (current page.north west) rectangle ([xshift=1.35cm]current page.south west);
+  \shade[top color=sdteal,bottom color=sdblue]
+    ([xshift=1.35cm]current page.north west) rectangle ([xshift=1.55cm]current page.south west);
+  % Retícula de 32 piezas (dos arcadas de 16), motivo odontográfico discreto
+  \foreach \row/\y in {0/4.3,1/3.62}{
+    \foreach \i in {0,...,15}{
+      \pgfmathsetmacro{\op}{ (\i==7 || \i==8) ? 0.9 : 0.16 + 0.03*abs(7.5-\i) }
+      \draw[sdteal,line width=0.7pt,opacity=\op,rounded corners=1.6pt]
+        ([xshift=3.05cm+\i*0.92cm,yshift=\y cm]current page.south west) rectangle ++(0.62,0.5);
+    }
+  }
+  \node[anchor=south west,font=\sffamily\scriptsize,text=sdmuted]
+    at ([xshift=3.05cm,yshift=2.85cm]current page.south west)
+    {Notación FDI · 32 piezas permanentes};
+\end{tikzpicture}
+
+\vspace*{-0.4cm}
+\hspace*{0.6cm}\begin{minipage}{0.86\textwidth}
+{\sffamily\small\color{sdmuted}\MakeUppercase{\sduniversidad}\par}
+\vspace{1pt}
+{\sffamily\small\color{sdmuted}\sdescuela\par}
+
+\vspace{4.6cm}
+{\sffamily\bfseries\small\color{sdteal}\MakeUppercase{#1}\par}
+\vspace{0.45cm}
+{\sffamily\bfseries\fontsize{46}{50}\selectfont\color{sdink}#2\par}
+\vspace{0.45cm}
+{\rmfamily\Large\color{sdmuted}\begin{minipage}{0.92\linewidth}\raggedright #3\end{minipage}\par}
+\vspace{0.9cm}
+{\color{sdteal}\rule{2.4cm}{2.2pt}}
+
+\vspace{0.9cm}
+{\sffamily\small
+\begin{tabular}{@{}p{3.1cm}l@{}}
+\textcolor{sdmuted}{Asignatura} & \textbf{\sdcurso} \\
+\textcolor{sdmuted}{Actividad}  & \sdactividad \\
+\textcolor{sdmuted}{Semana}     & 8 \\
+\textcolor{sdmuted}{Modalidad}  & Individual \\[0.5em]
+\textcolor{sdmuted}{Autor}      & \textbf{\sdautor} \\
+\textcolor{sdmuted}{Fecha}      & \sdfecha \\
+\end{tabular}\par}
+\end{minipage}
+\end{titlepage}
+}
+
+% ---------- Cajas ----------
+\newtcolorbox{sdnota}[1][Nota]{enhanced,breakable,colback=sdsoft,colframe=sdsoft,
+  borderline west={2.4pt}{0pt}{sdteal},arc=2pt,left=10pt,right=10pt,top=6pt,bottom=6pt,
+  fonttitle=\sffamily\bfseries\small,coltitle=sdteal,title={#1},attach title to upper={\par\vspace{2pt}},
+  fontupper=\small}
+\newtcolorbox{sdaviso}[1][Importante]{enhanced,breakable,colback=sdamber!7,colframe=sdamber!7,
+  borderline west={2.4pt}{0pt}{sdamber},arc=2pt,left=10pt,right=10pt,top=6pt,bottom=6pt,
+  fonttitle=\sffamily\bfseries\small,coltitle=sdamber!80!black,title={#1},attach title to upper={\par\vspace{2pt}},
+  fontupper=\small}
+\newtcolorbox{sdpaso}[1]{enhanced,breakable,colback=white,colframe=sdline,boxrule=0.6pt,arc=3pt,
+  left=10pt,right=10pt,top=7pt,bottom=7pt,fonttitle=\sffamily\bfseries\small,colbacktitle=sdsoft,
+  coltitle=sdink,title={#1},fontupper=\small}
+
+% Captura de pantalla con marco fino
+\newcommand{\captura}[3][0.96\linewidth]{%
+  \begin{figure}[H]\centering
+  \begin{tikzpicture}
+    \IfFileExists{#2.jpg}
+      {\node[inner sep=0pt] (img) {\includegraphics[width=#1]{#2}};}
+      {\node[inner sep=0pt,minimum width=#1,minimum height=0.56*#1,fill=sdsoft,font=\sffamily\small,text=sdmuted] (img) {Captura pendiente: \detokenize{#2}};}
+    \draw[sdline,line width=0.7pt,rounded corners=3pt] (img.south west) rectangle (img.north east);
+  \end{tikzpicture}
+  \caption{#3}\label{fig:#2}
+  \end{figure}}
+
+% Tecla o elemento de interfaz
+\newcommand{\boton}[1]{\tikz[baseline=(b.base)]\node[draw=sdline,fill=sdsoft,rounded corners=2pt,inner xsep=4pt,inner ysep=1.5pt,font=\sffamily\footnotesize](b){#1};}
+\newcommand{\ruta}[1]{\textsf{\small\color{sdteal}#1}}
+\newcommand{\codigo}[1]{\texttt{\small #1}}
+
+% ---------- Código ----------
+\lstset{basicstyle=\ttfamily\footnotesize,columns=fullflexible,keepspaces,breaklines,
+  backgroundcolor=\color{sdsoft},frame=l,framerule=2pt,rulecolor=\color{sdteal},
+  xleftmargin=8pt,framexleftmargin=6pt,aboveskip=0.8em,belowskip=0.6em,
+  keywordstyle=\color{sdblue}\bfseries,commentstyle=\color{sdmuted}\itshape,stringstyle=\color{sdteal},
+  showstringspaces=false,
+  literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1 {ñ}{{\~n}}1 {Á}{{\'A}}1 {É}{{\'E}}1 {Ó}{{\'O}}1 {¿}{{?`}}1 {¡}{{!`}}1}
+\renewcommand{\lstlistingname}{Listado}
+\renewcommand{\lstlistlistingname}{Índice de listados}
+
+% ---------- Enlaces (al final) ----------
+\RequirePackage[hidelinks,pdfusetitle]{hyperref}
+\RequirePackage[nameinlink,noabbrev]{cleveref}
+\crefname{figure}{figura}{figuras}
+\crefname{table}{tabla}{tablas}
+\crefname{section}{sección}{secciones}
+\crefname{subsection}{apartado}{apartados}

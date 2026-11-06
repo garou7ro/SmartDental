@@ -1,0 +1,235 @@
+% =====================================================================
+%  sd-estilo.sty — Estilo del manual de usuario de SmartDental
+% =====================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{sd-estilo}[2026/11/05 Estilo del manual de usuario SmartDental]
+
+% ---------- Idioma y tipografía ----------
+\RequirePackage[T1]{fontenc}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[spanish,es-noshorthands,es-tabla]{babel}
+\RequirePackage[default,semibold]{sourceserifpro}
+\RequirePackage[scale=0.92]{sourcesanspro}
+\RequirePackage[scale=0.86]{sourcecodepro}
+\RequirePackage{microtype}
+\RequirePackage{fontawesome5}
+
+% ---------- Página ----------
+\RequirePackage[a4paper,top=2.3cm,bottom=2.4cm,left=2.4cm,right=2.4cm]{geometry}
+\RequirePackage{setspace}
+\setstretch{1.15}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.6em}
+\RequirePackage{ragged2e}
+
+% ---------- Color ----------
+\RequirePackage[table,dvipsnames]{xcolor}
+\definecolor{sdink}{HTML}{14202E}
+\definecolor{sdmuted}{HTML}{5B6676}
+\definecolor{sdline}{HTML}{D9DFE7}
+\definecolor{sdsoft}{HTML}{F3F6F9}
+\definecolor{sdteal}{HTML}{0E8C80}
+\definecolor{sdblue}{HTML}{1F5FBF}
+\definecolor{sdred}{HTML}{C0392B}
+\definecolor{sdamber}{HTML}{B7791F}
+\definecolor{sdviolet}{HTML}{6B5CF6}
+\definecolor{sdpin}{HTML}{E8590C}
+\color{sdink}
+
+% ---------- Utilidades ----------
+\RequirePackage{graphicx}
+\RequirePackage{booktabs,tabularx,longtable,array,multirow}
+\RequirePackage{enumitem}
+\RequirePackage{amsmath,amssymb}
+\RequirePackage{float}
+\RequirePackage{calc}
+\RequirePackage{multicol}
+\RequirePackage{needspace}
+\RequirePackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,fit,calc,backgrounds,shadows.blur}
+\RequirePackage[most]{tcolorbox}
+\RequirePackage{csquotes}
+\RequirePackage{titlesec,titletoc}
+\RequirePackage[font={small,sf},labelfont={bf,color=sdteal},labelsep=period,justification=raggedright,singlelinecheck=false,skip=6pt]{caption}
+
+\setlist{itemsep=0.22em,topsep=0.3em,leftmargin=1.4em}
+\setlist[itemize]{label={\color{sdteal}\small$\blacktriangleright$}}
+\renewcommand{\arraystretch}{1.3}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+% ---------- Títulos ----------
+\titleformat{\section}[display]
+  {\sffamily\bfseries\color{sdink}}
+  {\small\color{sdteal}\MakeUppercase{Capítulo}~\thesection}{0.25em}
+  {\fontsize{24}{28}\selectfont}[\vspace{4pt}{\color{sdline}\titlerule[0.8pt]}]
+\titleformat{\subsection}
+  {\sffamily\bfseries\Large\color{sdink}}{\color{sdteal}\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}
+  {\sffamily\bfseries\large\color{sdink}}{\thesubsubsection}{0.5em}{}
+\titleformat{\paragraph}[runin]
+  {\sffamily\bfseries\color{sdink}}{}{0pt}{}
+\titlespacing*{\section}{0pt}{0.2em}{1.1em}
+\titlespacing*{\subsection}{0pt}{1.3em}{0.45em}
+\titlespacing*{\subsubsection}{0pt}{1em}{0.3em}
+\newcommand{\capitulo}[1]{\clearpage\section{#1}}
+
+% ---------- Página sin encabezados ni pies: solo el número ----------
+\RequirePackage{fancyhdr}
+\fancypagestyle{sdpagina}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}\renewcommand{\footrulewidth}{0pt}%
+  \fancyfoot[C]{\sffamily\footnotesize\color{sdmuted}\thepage}}
+\pagestyle{sdpagina}
+\fancypagestyle{plain}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}\fancyfoot[C]{\sffamily\footnotesize\color{sdmuted}\thepage}}
+
+% ---------- Índices ----------
+\titlecontents{section}[0em]{\vspace{0.5em}\sffamily\bfseries}
+  {\contentslabel[\color{sdteal}\thecontentslabel]{1.8em}}{}{\hfill\contentspage}
+\titlecontents{subsection}[1.8em]{\sffamily\small}
+  {\contentslabel[\thecontentslabel]{2.4em}}{}{\titlerule*[0.6pc]{.}\contentspage}
+\titlecontents{figure}[0em]{\sffamily\small}
+  {\contentslabel[\color{sdteal}\thecontentslabel]{2.2em}}{}{\titlerule*[0.6pc]{.}\contentspage}
+\titlecontents{table}[0em]{\sffamily\small}
+  {\contentslabel[\color{sdteal}\thecontentslabel]{2.2em}}{}{\titlerule*[0.6pc]{.}\contentspage}
+
+% ---------- Portada (sin datos personales) ----------
+\newcommand{\sdportada}{%
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{tikzpicture}[remember picture,overlay]
+  \fill[sdink] (current page.north west) rectangle (current page.south east);
+  \shade[left color=sdteal,right color=sdblue,opacity=0.9]
+    ([yshift=-0.5cm]current page.north west) rectangle ([yshift=-0.72cm]current page.north east);
+  % Arcada estilizada: 16 piezas superiores y 16 inferiores
+  \begin{scope}[shift={([xshift=-5.6cm,yshift=-9.4cm]current page.north east)}]
+    \foreach \i in {0,...,15}{
+      \pgfmathsetmacro{\a}{180-\i*12-0.0}
+      \pgfmathsetmacro{\op}{(\i==2 || \i==9) ? 1 : 0.35}
+      \ifnum\i=2 \def\c{sdred}\else\ifnum\i=9 \def\c{sdblue}\else\def\c{white}\fi\fi
+      \draw[\c,line width=1pt,opacity=\op,rounded corners=2pt,fill=\c,fill opacity=0.08*\op]
+        ({4.1*cos(\a+6)},{3.3*sin(\a+6)}) ++(-0.33,-0.27) rectangle ++(0.66,0.54);
+    }
+    \foreach \i in {0,...,15}{
+      \pgfmathsetmacro{\a}{180+\i*12}
+      \ifnum\i=12 \def\c{sdred}\def\op{1}\else\def\c{white}\def\op{0.22}\fi
+      \draw[\c,line width=1pt,opacity=\op,rounded corners=2pt]
+        ({4.1*cos(\a+6)},{3.3*sin(\a+6)-1.2}) ++(-0.33,-0.27) rectangle ++(0.66,0.54);
+    }
+  \end{scope}
+  \node[anchor=south west,font=\sffamily\scriptsize,text=white!55!sdink,align=left]
+    at ([xshift=2.2cm,yshift=1.6cm]current page.south west)
+    {Versión 1.0 del sistema\\Noviembre de 2026};
+\end{tikzpicture}
+
+\vspace*{8.6cm}
+\hspace*{-0.2cm}\begin{minipage}{0.9\textwidth}
+{\sffamily\bfseries\small\color{sdteal}\MakeUppercase{Manual de usuario}\par}
+\vspace{0.4cm}
+{\sffamily\bfseries\fontsize{52}{56}\selectfont\color{white}SmartDental\par}
+\vspace{0.5cm}
+{\rmfamily\Large\color{white!78!sdink}\begin{minipage}{0.86\linewidth}\raggedright
+Guía completa del panel de la clínica y de la consola de plataforma: agenda, pacientes, odontograma 2D y 3D, cotizaciones, inventario, caja, WhatsApp y el asistente Denti.\end{minipage}\par}
+\vspace{1cm}
+{\color{sdteal}\rule{2.4cm}{2.2pt}}
+\vspace{0.8cm}
+
+{\sffamily\small\color{white!70!sdink}
+\begin{tabular}{@{}l@{\hspace{1.4em}}l@{\hspace{1.4em}}l@{}}
+\faIcon{user-shield}\enspace Administración de clínica & \faIcon{tooth}\enspace Odontólogos & \faIcon{concierge-bell}\enspace Recepción \\[0.3em]
+\faIcon{server}\enspace Administración de plataforma & \faIcon{desktop}\enspace Escritorio y tableta & \faIcon{mobile-alt}\enspace Teléfono \\
+\end{tabular}\par}
+\end{minipage}
+\end{titlepage}
+}
+
+% ---------- Avisos con icono ----------
+\newcommand{\sdavisobox}[5]{% nombre, color, icono, título por omisión
+\newtcolorbox{#1}[1][#4]{enhanced,colback=#2!6,colframe=#2!6,
+  borderline west={2.6pt}{0pt}{#2},arc=2pt,left=30pt,right=10pt,top=7pt,bottom=7pt,
+  fontupper=\small,
+  overlay={\node[anchor=north west,text=#2,font=\normalsize] at ([xshift=9pt,yshift=-7pt]frame.north west) {\faIcon{#3}};},
+  before upper={{\sffamily\bfseries\small\color{#2!85!black}##1}\par\vspace{2pt}}#5}}
+\sdavisobox{sdnota}{sdteal}{info-circle}{Nota}{}
+\sdavisobox{sdconsejo}{sdblue}{lightbulb}{Consejo}{}
+\sdavisobox{sdaviso}{sdamber}{exclamation-triangle}{Importante}{}
+\sdavisobox{sdpermiso}{sdviolet}{lock}{Permisos}{}
+\sdavisobox{sdpeligro}{sdred}{ban}{Precaución}{}
+
+% Caja de paso del ejemplo práctico
+\newtcolorbox{sdpaso}[1]{enhanced,breakable,colback=white,colframe=sdline,boxrule=0.6pt,arc=3pt,
+  left=10pt,right=10pt,top=7pt,bottom=7pt,fonttitle=\sffamily\bfseries\small,colbacktitle=sdsoft,
+  coltitle=sdink,title={#1},fontupper=\small}
+
+% ---------- Señalización sobre capturas ----------
+% \begin{pantalla}[ancho]{archivo}{ancho en px de la captura}{pie de figura}
+%   \zona{n}{x}{y}{w}{h}  recuadro + marcador n en su esquina superior izquierda (px)
+%   \zonad{n}{x}{y}{w}{h} igual, con el marcador en la esquina superior derecha
+%   \pin{n}{x}{y}         solo el marcador, centrado en (x, y)
+% \end{pantalla}
+\tikzset{
+  sdpin/.style={circle,fill=sdpin,draw=white,line width=1.3pt,text=white,font=\sffamily\bfseries\footnotesize,
+    inner sep=0pt,minimum size=1.35em,blur shadow={shadow blur steps=6,shadow xshift=0.4pt,shadow yshift=-0.6pt,shadow opacity=35}},
+  sdzona/.style={draw=sdpin,line width=1.1pt,rounded corners=3pt,fill=sdpin,fill opacity=0.07},
+}
+\newsavebox\sdimgbox
+\newcommand{\sdcapt}{}\newcommand{\sdlab}{}
+\newenvironment{pantalla}[4][\linewidth]{%
+  \sbox\sdimgbox{\includegraphics[width=#1]{capturas/#2}}%
+  \begin{figure}[H]\centering
+  \pgfmathsetmacro\sdpx{\wd\sdimgbox/#3}%
+  \gdef\sdcapt{#4}\gdef\sdlab{#2}%
+  \begin{tikzpicture}[x=\sdpx pt,y=-\sdpx pt]
+  \node[anchor=north west,inner sep=0pt] (img) at (0,0) {\usebox\sdimgbox};
+}{%
+  \draw[sdline,line width=0.7pt,rounded corners=3pt] (img.south west) rectangle (img.north east);
+  \end{tikzpicture}
+  \caption{\sdcapt}\label{fig:\sdlab}
+  \end{figure}}
+\newcommand{\zona}[5]{\draw[sdzona] (#2,#3) rectangle ++(#4,#5); \node[sdpin] at (#2,#3) {#1};}
+\newcommand{\zonad}[5]{\draw[sdzona] (#2,#3) rectangle ++(#4,#5); \node[sdpin] at ($(#2,#3)+(#4,0)$) {#1};}
+\newcommand{\pin}[3]{\node[sdpin] at (#2,#3) {#1};}
+
+% Marcador en el texto, idéntico al de la captura
+\newcommand{\marca}[1]{\tikz[baseline=(m.base)]\node[circle,fill=sdpin,text=white,font=\sffamily\bfseries\scriptsize,inner sep=0pt,minimum size=1.3em](m){#1};}
+
+% Leyenda numerada bajo cada captura
+\newenvironment{leyenda}[1][2]{%
+  \par\nopagebreak[4]\vspace{-0.4em}\nopagebreak[4]\small\noindent\begin{minipage}{\linewidth}
+  \begin{multicols}{#1}\raggedcolumns
+  \begin{list}{}{\leftmargin=2em\labelwidth=1.5em\labelsep=0.5em\itemsep=0.35em\topsep=0pt\parsep=0pt}}
+  {\end{list}\end{multicols}\end{minipage}\par\vspace{0.2em}}
+\newcommand{\li}[2]{\item[\marca{#1}]\textbf{#2.}~}
+
+% ---------- Accesos por rol ----------
+\newcommand{\sdchip}[2]{\tikz[baseline=(c.base)]\node[rounded corners=6pt,inner xsep=6pt,inner ysep=2.2pt,font=\sffamily\scriptsize\bfseries,#1](c){#2};}
+\newcommand{\rolsi}[1]{\sdchip{fill=sdteal!12,text=sdteal!80!black}{\faIcon{check}\enspace#1}}
+\newcommand{\rolno}[1]{\sdchip{draw=sdline,text=sdmuted!80}{\faIcon{times}\enspace#1}}
+\newcommand{\rolver}[1]{\sdchip{fill=sdamber!12,text=sdamber!85!black}{\faIcon{eye}\enspace#1}}
+% \acceso{A}{O}{R}  con s = sí, n = no, v = solo consulta
+\newcommand{\sdrol}[2]{\if#1s\rolsi{#2}\else\if#1v\rolver{#2}\else\rolno{#2}\fi\fi}
+\newcommand{\acceso}[3]{\par\noindent{\sffamily\scriptsize\color{sdmuted}\MakeUppercase{Disponible para}}\enspace
+  \sdrol{#1}{Administración}\enspace\sdrol{#2}{Odontólogo}\enspace\sdrol{#3}{Recepción}\par\medskip}
+\newcommand{\soloplataforma}{\par\noindent{\sffamily\scriptsize\color{sdmuted}\MakeUppercase{Disponible para}}\enspace\rolsi{Administración de plataforma}\par\medskip}
+
+% ---------- Pasos numerados ----------
+\newcounter{sdpasos}
+\newenvironment{pasos}{\setcounter{sdpasos}{0}\begin{list}{}{\leftmargin=2.1em\labelwidth=1.6em\labelsep=0.5em\itemsep=0.35em\topsep=0.3em}}{\end{list}}
+\newcommand{\paso}{\stepcounter{sdpasos}\item[{\tikz[baseline=(n.base)]\node[circle,fill=sdink,text=white,font=\sffamily\scriptsize\bfseries,inner sep=1.6pt,minimum size=1.15em](n){\thesdpasos};}]}
+\newcommand{\resultado}[1]{\par{\small\color{sdteal}\faIcon{check-circle}\enspace\textit{#1}}\par}
+
+% ---------- Elementos de interfaz ----------
+\newcommand{\boton}[1]{\tikz[baseline=(b.base)]\node[draw=sdline,fill=sdsoft,rounded corners=2pt,inner xsep=4pt,inner ysep=1.5pt,font=\sffamily\footnotesize](b){\strut #1};}
+\newcommand{\tecla}[1]{\tikz[baseline=(b.base)]\node[draw=sdmuted!60,fill=white,rounded corners=2pt,inner xsep=3.5pt,inner ysep=1.2pt,font=\ttfamily\footnotesize,blur shadow={shadow blur steps=3,shadow xshift=0pt,shadow yshift=-0.5pt,shadow opacity=25}](b){\strut #1};}
+\newcommand{\ruta}[1]{\textsf{\small\color{sdteal}#1}}
+\newcommand{\sep}{\,\faIcon{angle-right}\,}
+\newcommand{\campo}[1]{\textsf{\small\itshape #1}}
+\newcommand{\codigo}[1]{\texttt{\small #1}}
+\newcommand{\estado}[2]{\tikz[baseline=(e.base)]\node[rounded corners=2pt,fill=#1!14,text=#1!80!black,font=\sffamily\scriptsize\bfseries,inner xsep=4pt,inner ysep=1.6pt](e){\strut #2};}
+
+% ---------- Enlaces (al final) ----------
+\RequirePackage[hidelinks]{hyperref}
+\RequirePackage[nameinlink,noabbrev]{cleveref}
+\crefname{figure}{figura}{figuras}
+\crefname{table}{tabla}{tablas}
+\crefname{section}{capítulo}{capítulos}
+\crefname{subsection}{apartado}{apartados}
